@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 usage() {
     echo "USAGE: $(basename $0) SOURCE... DIRECTORY"
