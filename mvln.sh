@@ -6,6 +6,11 @@ usage() {
     exit 1
 }
 
+if [[ -z $(which realpath) ]]; then
+    echo "Your distro is braindead and/or has a slow update pace. Please install realpath."
+    exit 1
+fi
+
 [[ $# -ge 2 ]] || usage
 DIRECTORY="${@: -1}"
 [[ -d $DIRECTORY ]] || usage
