@@ -6,6 +6,18 @@ usage() {
     exit 1
 }
 
+depend_on() {
+    for command in $@; do
+        which $command &>/dev/null
+        if [[ $? -ne 0 ]]; then
+            echo "This script depends on the '$command' command, please obtain it."
+            exit 1
+        fi
+    done
+}
+
+depend_on realpath
+
 [[ $# -ge 2 ]] || usage
 DIRECTORY="${@: -1}"
 [[ -d $DIRECTORY ]] || usage
