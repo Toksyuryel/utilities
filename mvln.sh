@@ -6,10 +6,17 @@ usage() {
     exit 1
 }
 
-if [[ -z $(which realpath) ]]; then
-    echo "Your distro is braindead and/or has a slow update pace. Please install realpath."
-    exit 1
-fi
+depend_on() {
+    for command in $@; do
+        which $command &>/dev/null
+        if [[ $? -ne 0 ]]; then
+            echo "This script depends on the '$command' command, please obtain it."
+            exit 1
+        fi
+    done
+}
+
+depend_on realpath
 
 [[ $# -ge 2 ]] || usage
 DIRECTORY="${@: -1}"
