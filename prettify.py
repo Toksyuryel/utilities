@@ -233,8 +233,8 @@ def render_html(line_generator, args):
              'default': 80,
              'dest': 'page_width',
              'help': '''Width to reflow the log to.''',
-             })
-         ))
+             }),
+        ))
 def render_plaintext(line_generator, args):
     max_name_length = args.max_name_length
 
