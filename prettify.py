@@ -40,6 +40,19 @@ def read_weechat(infile, args):
             'help': '''Name to use for the log's title. If not provided,
             "Prettified Log" will be used.''',
             }),
+         ('-dd', '--drop-date', {
+            'action': 'store_false',
+            'dest': 'keep_date',
+            'help': '''Drop the date portion of the timestamp. This is implied
+                by --drop-timestamp, so only the latter is needed if both
+                effects are desired.''',
+            }),
+         ('-dt', '--drop-timestamp', {
+            'action': 'store_false',
+            'dest': 'keep_timestamp',
+            'help': '''Drop the timestamp, leaving just the log text. Implies
+            --drop-date.''',
+            }),
         ))
 def render_html(line_generator, args):
     yield '''<!doctype html>
@@ -113,11 +126,15 @@ def render_html(line_generator, args):
 '''
 
     for (timestamp, username, message) in line_generator:
-        yield '''        <div class="line">
-            <span class="timestamp">'''
-        yield timestamp
-        yield '''</span>
-            <span class="username">'''
+        yield '''        <div class="line">'''
+        if args.keep_timestamp:
+            yield '''            <span class="timestamp">'''
+            if args.keep_date:
+                yield timestamp
+            else:
+                yield timestamp[11:]
+            yield '''</span>'''
+        yield '''            <span class="username">'''
         if username == "*":
             yield '''</span>
             <span class="message"><strong>'''
@@ -135,7 +152,7 @@ def render_html(line_generator, args):
 '''
 
     yield '''    </div>'''
-    if args.add_timer:
+    if args.add_timer:  # TODO: correctly handle date parsing in the case of --drop-(date|timestamp)
         yield '''    <script type="text/javascript">
         var timerLinks = document.createElement("div");
         var timedLink = document.createElement("a");
@@ -234,6 +251,19 @@ def render_html(line_generator, args):
              'dest': 'page_width',
              'help': '''Width to reflow the log to.''',
              }),
+         ('-dd', '--drop-date', {
+            'action': 'store_false',
+            'dest': 'keep_date',
+            'help': '''Drop the date portion of the timestamp. This is implied
+                by --drop-timestamp, so only the latter is needed if both
+                effects are desired.''',
+            }),
+         ('-dt', '--drop-timestamp', {
+            'action': 'store_false',
+            'dest': 'keep_timestamp',
+            'help': '''Drop the timestamp, leaving just the log text. Implies
+                --drop-date.''',
+            }),
         ))
 def render_plaintext(line_generator, args):
     max_name_length = args.max_name_length
@@ -251,21 +281,27 @@ def render_plaintext(line_generator, args):
                 max_name_length = len(username)
 
     for (timestamp, username, message) in lines:
+        if args.keep_timestamp:
+            timestamp += "  "
+        else:
+            timestamp = ""
+        if not args.keep_date:
+            timestamp = timestamp[11:]
         pretty_line = ""
         pretty_line += timestamp
-        pretty_line += " " * (max_name_length - len(username) + 2)
+        pretty_line += " " * (max_name_length - len(username))
         pretty_line += username
         pretty_line += " "
-        remaining_line_length = args.page_width - (max_name_length + 3 + len(timestamp))
+        remaining_line_length = args.page_width - (max_name_length + 1 + len(timestamp))
         message = message.split()
         while message != []:
             if len(message[0]) > remaining_line_length:
-                if (len(message[0]) + max_name_length + 3 + len(timestamp)) > args.page_width:
+                if (len(message[0]) + max_name_length + 1 + len(timestamp)) > args.page_width:
                     pretty_line += " " + message[0]
                     message = message[1:]
                     remaining_line_length = 0
                 else:
-                    pretty_line += "\n" + (" " * (max_name_length + 3 + len(timestamp)))
+                    pretty_line += "\n" + (" " * (max_name_length + 1 + len(timestamp)))
                     remaining_line_length = args.page_width - (max_name_length + 3 + len(timestamp))
             else:
                 pretty_line += " " + message[0]
