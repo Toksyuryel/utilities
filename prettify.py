@@ -264,6 +264,13 @@ def render_html(line_generator, args):
             'help': '''Drop the timestamp, leaving just the log text. Implies
                 --drop-date.''',
             }),
+         ('-id', '--indent', {
+             'action': 'store',
+             'type': int,
+             'default': 0,
+             'dest': 'indent_depth',
+             'help': '''Depth to indent continuation lines to.''',
+             }),
         ))
 def render_plaintext(line_generator, args):
     max_name_length = args.max_name_length
@@ -296,13 +303,13 @@ def render_plaintext(line_generator, args):
         message = message.split()
         while message != []:
             if len(message[0]) > remaining_line_length:
-                if (len(message[0]) + max_name_length + 1 + len(timestamp)) > args.page_width:
+                if (len(message[0]) + max_name_length + 1 + args.indent_depth + len(timestamp)) > args.page_width:
                     pretty_line += " " + message[0]
                     message = message[1:]
                     remaining_line_length = 0
                 else:
-                    pretty_line += "\n" + (" " * (max_name_length + 1 + len(timestamp)))
-                    remaining_line_length = args.page_width - (max_name_length + 3 + len(timestamp))
+                    pretty_line += "\n" + (" " * (max_name_length + 1 + args.indent_depth + len(timestamp)))
+                    remaining_line_length = args.page_width - (max_name_length + 1 + args.indent_depth + len(timestamp))
             else:
                 pretty_line += " " + message[0]
                 remaining_line_length -= len(message[0]) + 1
