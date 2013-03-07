@@ -15,7 +15,7 @@ def read_weechat(infile, args):
                         " ".join(line_parts[4:]))
             elif line_parts[2] == "--":
                 message = messages.System(" ".join(line_parts[3:]))
-            else:
+            else:  # TODO: more cases for other message types
                 message = messages.PrivMsg(line_parts[2],
                         " ".join(line_parts[3:]))
             yield (timestamp, message)
