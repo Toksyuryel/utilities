@@ -2,9 +2,8 @@
 from __future__ import unicode_literals
 from prettify.app import register_renderer
 from prettify import messages
-import datetime
 
-def render_plaintext(line_generator, args):  # TODO: rework for new format
+def render_plaintext(line_generator, args):
     max_name_length = args.max_name_length
 
     if args.single_pass:
@@ -13,41 +12,73 @@ def render_plaintext(line_generator, args):  # TODO: rework for new format
         lines = list(line_generator)
         preset_max_name_length = max_name_length
         max_name_length = 0
-        for (timestamp, username, message) in lines:
-            if len(username) >= preset_max_name_length:
-                max_name_length = preset_max_name_length
-            elif len(username) > max_name_length:
-                max_name_length = len(username)
+        for (timestamp, message) in lines:
+            if isinstance(message, messages.PrivMsg):
+                username_length = len(message.username)
+            elif isinstance(message, messages.Notice):
+                username_length = len(message.username) + 2
+            elif isinstance(message, messages.Action):
+                username_length = 1
+            elif isinstance(message, messages.System):
+                username_length = 2
+            elif isinstance(message, messages.Join) or isinstance(message,
+                    messages.Part) or isinstance(message, messages.Quit):
+                username_length = 3
 
-    for (timestamp, username, message) in lines:
+            if username_length >= preset_max_name_length:
+                max_name_length = preset_max_name_length
+            elif username_length > max_name_length:
+                max_name_length = username_length
+
+
+    for (timestamp, message) in lines:
         if args.keep_timestamp:
-            timestamp += "  "
-        else:
-            timestamp = ""
-        if not args.keep_date:
-            timestamp = timestamp[11:]
-        pretty_line = ""
-        pretty_line += timestamp
-        pretty_line += " " * (max_name_length - len(username))
-        pretty_line += username
-        pretty_line += " "
-        remaining_line_length = args.page_width - (max_name_length + 1 + len(timestamp))
-        message = message.split()
-        while message != []:
-            if len(message[0]) > remaining_line_length:
-                if (len(message[0]) + max_name_length + 1 + args.indent_depth + len(timestamp)) > args.page_width:
-                    pretty_line += " " + message[0]
-                    message = message[1:]
-                    remaining_line_length = 0
-                else:
-                    pretty_line += "\n" + (" " * (max_name_length + 1 + args.indent_depth + len(timestamp)))
-                    remaining_line_length = args.page_width - (max_name_length + 1 + args.indent_depth + len(timestamp))
+            if args.keep_date:
+                gutter = "{0}  ".format(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
             else:
-                pretty_line += " " + message[0]
-                remaining_line_length -= len(message[0]) + 1
-                message = message[1:]
-        pretty_line += "\n"
-        yield pretty_line
+                gutter = "{0}  ".format(timestamp.strftime("%H:%M:%S"))
+        else:
+            gutter = ""
+
+        if isinstance(message, messages.PrivMsg):
+            gutter += message.username
+        elif isinstance(message, messages.Notice):
+            gutter += "-{0}-".format(message.username)
+        elif isinstance(message, messages.Action):
+            gutter += "*"
+        elif isinstance(message, messages.System):
+            gutter += "--"
+        elif isinstance(message, messages.Join):
+            gutter += "-->"
+        elif isinstance(message, messages.Part):
+            gutter += "<--"
+        elif isinstance(message, messages.Quit):
+            gutter += "-!-"
+        gutter += " "
+
+        if isinstance(message, messages.PrivMsg) or isinstance(message,
+                messages.Notice) or isinstance(message, messages.System):
+            text = message.text
+        elif isinstance(message, messages.Action):
+            text = "{0} {1}".format(message.username, message.text)
+        elif isinstance(message, messages.Join) or isinstance(message,
+                messages.Part) or isinstance(message, messages.Quit):
+            text = message.username
+        text_parts = text.split(" ")
+
+        pretty_lines = [gutter]
+        while text_parts != []:
+            if len(text_parts[0]) + len(pretty_lines[-1]) + 1 > args.page_width:
+                if len(text_parts[0]) + len(gutter) + args.indent_depth + 1 > args.page_width:
+                    pretty_lines[-1] += " {0}".format(text_parts.pop(0))
+                    pretty_lines.append(" " * (len(gutter) + args.indent_depth))
+                else:
+                    pretty_lines.append(" " * (len(gutter) + args.indent_depth))
+                    pretty_lines[-1] += " {0}".format(text_parts.pop(0))
+            else:
+                pretty_lines[-1] += " {0}".format(text_parts.pop(0))
+
+        for line in pretty_lines: yield "{0}\n".format(line)
 
 register_renderer(render_plaintext, "plaintext", "emits reflowed plaintext",
         (('-1', '--single-pass', {
