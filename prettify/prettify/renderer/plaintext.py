@@ -68,9 +68,12 @@ def render_plaintext(line_generator, args):
             text = message.text
         elif isinstance(message, messages.Action):
             text = "{0} {1}".format(message.username, message.text)
-        elif isinstance(message, messages.Join) or isinstance(message,
-                messages.Part) or isinstance(message, messages.Quit):
-            text = message.username
+        elif isinstance(message, messages.Join):
+            text = "{0} joined".format(message.username)
+        elif isinstance(message, messages.Part):
+            text = "{0} left".format(message.username)
+        elif isinstance(message, messages.Quit):
+            text = "{0} quit".format(message.username)
         text_parts = text.split(" ")
 
         pretty_lines = [gutter]
