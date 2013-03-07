@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
         name = "prettify",
-        version = "0.1.0",
+        version = "0.1.1",
         description = "IRC log prettifier",
         url = "https://pypi.python.org/pypi/prettify",
 
