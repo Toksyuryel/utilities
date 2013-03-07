@@ -41,18 +41,25 @@ def render_plaintext(line_generator, args):
             gutter = ""
 
         if isinstance(message, messages.PrivMsg):
+            gutter += " " * (max_name_length - len(message.username))
             gutter += message.username
         elif isinstance(message, messages.Notice):
+            gutter += " " * (max_name_length - (len(message.username) + 2))
             gutter += "-{0}-".format(message.username)
         elif isinstance(message, messages.Action):
+            gutter += " " * (max_name_length - 1)
             gutter += "*"
         elif isinstance(message, messages.System):
+            gutter += " " * (max_name_length - 2)
             gutter += "--"
         elif isinstance(message, messages.Join):
+            gutter += " " * (max_name_length - 3)
             gutter += "-->"
         elif isinstance(message, messages.Part):
+            gutter += " " * (max_name_length - 3)
             gutter += "<--"
         elif isinstance(message, messages.Quit):
+            gutter += " " * (max_name_length - 3)
             gutter += "-!-"
         gutter += " "
 
