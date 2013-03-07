@@ -81,7 +81,8 @@ def render_plaintext(line_generator, args):
             if len(text_parts[0]) + len(pretty_lines[-1]) + 1 > args.page_width:
                 if len(text_parts[0]) + len(gutter) + args.indent_depth + 1 > args.page_width:
                     pretty_lines[-1] += " {0}".format(text_parts.pop(0))
-                    pretty_lines.append(" " * (len(gutter) + args.indent_depth))
+                    if text_parts != []:
+                        pretty_lines.append(" " * (len(gutter) + args.indent_depth))
                 else:
                     pretty_lines.append(" " * (len(gutter) + args.indent_depth))
                     pretty_lines[-1] += " {0}".format(text_parts.pop(0))
