@@ -22,7 +22,7 @@ def prettify_log(ugly_log, reader, reader_args, renderer, renderer_args,
     return renderer(reader(ugly_log, reader_args), renderer_args)
 
 def run():
-    import argparse, sys, prettify.reader, prettify.renderer, prettify.messages
+    import argparse, sys, io, prettify.reader, prettify.renderer, prettify.messages
 
     parser = argparse.ArgumentParser(description='''Prettify an IRC log.''')
     parser.add_argument('-r', '--reader', action='store', default='weechat',
@@ -69,10 +69,8 @@ def run():
     # errors - should be safe, since human-readable logs won't suffer from the
     # loss of non-human-readable byte strings, which is all this'll catch on a
     # non-corrupted log
-    if args.infile != sys.stdin:
-        in_filename = args.infile.name
-        args.infile.close()
-        args.infile = open(in_filename, "r", errors="ignore")
+    in_buffer = args.infile.detach()
+    args.infile = io.TextIOWrapper(in_buffer, errors="ignore")
 
     reader_parser = argparse.ArgumentParser(description=readers[args.reader][1])
     for option in readers[args.reader][2]:
