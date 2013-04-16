@@ -1,4 +1,5 @@
 from __future__ import unicode_literals, print_function
+import functools
 
 readers = {}
 renderers = {}
@@ -12,13 +13,13 @@ def register_renderer(renderer_fn, renderer_name, renderer_desc="", renderer_opt
 def prettify_log(ugly_log, reader, reader_args, renderer, renderer_args,
         ignore_types):
     if ignore_types is not None:
-        def wrapped_reader():
-            for line in reader(ugly_log, reader_args):
+        def wrapped_reader(orig_reader, ugly_log, reader_args):
+            for line in orig_reader(ugly_log, reader_args):
                 if not type(line[1]) in ignore_types:
                     yield line
-        return renderer(wrapped_reader(), renderer_args)
-    else:
-        return renderer(reader(ugly_log, reader_args), renderer_args)
+        reader = functools.partial(wrapped_reader, reader)
+
+    return renderer(reader(ugly_log, reader_args), renderer_args)
 
 def run():
     import argparse, sys, prettify.reader, prettify.renderer, prettify.messages
