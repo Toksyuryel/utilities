@@ -129,7 +129,7 @@ register_renderer(render_plaintext, "plaintext", "emits reflowed plaintext",
             'help': '''Drop the timestamp, leaving just the log text. Implies
                 --drop-date.''',
             }),
-         ('-id', '--indent', {
+         ('-I', '--indent', {
              'action': 'store',
              'type': int,
              'default': 0,
