@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import unicode_literals
 from prettify.app import register_renderer
 from prettify import messages
