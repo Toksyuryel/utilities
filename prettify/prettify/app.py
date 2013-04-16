@@ -65,6 +65,15 @@ def run():
             help='''Drop system message lines.''')
     args, unknown_args = parser.parse_known_args()
 
+    # let's do some hackery with the opened files to get it to ignore encoding
+    # errors - should be safe, since human-readable logs won't suffer from the
+    # loss of non-human-readable byte strings, which is all this'll catch on a
+    # non-corrupted log
+    if args.infile != sys.stdin:
+        in_filename = args.infile.name
+        args.infile.close()
+        args.infile = open(in_filename, "r", errors="ignore")
+
     reader_parser = argparse.ArgumentParser(description=readers[args.reader][1])
     for option in readers[args.reader][2]:
         reader_parser.add_argument(*option[:-1], **option[-1])
