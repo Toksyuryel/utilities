@@ -1,14 +1,18 @@
 from __future__ import unicode_literals, print_function
-import functools
+import functools, collections
 
+Reader = collections.namedtuple("Reader", ("fn", "desc", "options", "wants_raw"))
+Renderer = collections.namedtuple("Renderer", ("fn", "desc", "options", "wants_raw"))
 readers = {}
 renderers = {}
 
-def register_reader(reader_fn, reader_name, reader_desc="", reader_options=()):
-    readers[reader_name] = (reader_fn, reader_desc, reader_options)
+def register_reader(reader_fn, reader_name, reader_desc="", reader_options=(),
+        wants_raw=False):
+    readers[reader_name] = Reader(reader_fn, reader_desc, reader_options, wants_raw)
 
-def register_renderer(renderer_fn, renderer_name, renderer_desc="", renderer_options=()):
-    renderers[renderer_name] = (renderer_fn, renderer_desc, renderer_options)
+def register_renderer(renderer_fn, renderer_name, renderer_desc="",
+        renderer_options=(), wants_raw=False):
+    renderers[renderer_name] = Renderer(renderer_fn, renderer_desc, renderer_options, wants_raw)
 
 def prettify_log(ugly_log, reader, reader_args, renderer, renderer_args,
         ignore_types):
@@ -70,7 +74,15 @@ def run():
     # loss of non-human-readable byte strings, which is all this'll catch on a
     # non-corrupted log
     in_buffer = args.infile.detach()
-    args.infile = io.TextIOWrapper(in_buffer, errors="ignore")
+    if readers[args.reader].wants_raw:
+        in_file = in_buffer
+    else:
+        in_file = io.TextIOWrapper(in_buffer, errors="ignore")
+
+    if renderers[args.renderer].wants_raw:
+        out_file = args.outfile.detach()
+    else:
+        out_file = args.outfile
 
     reader_parser = argparse.ArgumentParser(description=readers[args.reader][1])
     for option in readers[args.reader][2]:
@@ -89,7 +101,12 @@ def run():
         renderer_args = renderer_parser.parse_args(unknown_args)
 
     if not (args.reader_help or args.renderer_help):
-        for line in prettify_log(args.infile,
+        for line in prettify_log(in_file,
                 readers[args.reader][0], reader_args,
                 renderers[args.renderer][0], renderer_args, args.ignore_types):
-            args.outfile.write(line)
+            try:
+                out_file.write(line)
+            except IOError as e:
+                if e.errno != 32:  # re-raise anything except broken pipe
+                    raise(e)
+                sys.exit()  # end when we have no output pipe
