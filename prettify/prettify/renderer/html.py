@@ -182,6 +182,7 @@ def render_html(line_generator, args):
                 time_format="%H:%M:%S"
             line_base = template_line_timestamp
         else:
+            time_format=""
             line_base = template_line
 
         if isinstance(message, messages.PrivMsg):
