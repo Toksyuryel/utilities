@@ -10,50 +10,50 @@ template_header = """<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <title>{log_name}</title>
     <style type="text/css">
-        * {
+        * {{
             box-sizing: border-box;
-        }
-        body {
+        }}
+        body {{
             padding: 2.5em;
-        }
-        h1 {
+        }}
+        h1 {{
             margin-top: 0;
             font-size: 1.5em;
             text-align: center;
-        }
-        h1, .log {
+        }}
+        h1, .log {{
             width: 100%;
-        }
-        .username {
+        }}
+        .username {{
             font-weight: bold;
-        }
-        .log {
+        }}
+        .log {{
             border-collapse: collapse;
-        }
-        .line {
+        }}
+        .line {{
             background-color: lightgray;
             opacity: 1;
             -webkit-transition: opacity .3s ease-in;
             -moz-transition: opacity .3s ease-in;
             -o-transition: opacity .3s ease-in;
             transition: opacity .3s ease-in;
-        }
-        .line.timeHidden {
+        }}
+        .line.timeHidden {{
             opacity: 0;
-        }
-        .line td {
+        }}
+        .line td {{
             padding: 0.6em;
-        }
-        .line:nth-child(even) {
+        }}
+        .line:nth-child(even) {{
             background-color: silver;
-        }
-        .timerLinks {
+        }}
+        .timerLinks {{
             position: fixed;
             top: 0.3em;
             left: 0.3em;
             background-color: #fff;
-        }
-        .timerLinks a {
+        }}
+        .timerLinks a {{
             border: none;
             opacity: 0.4;
             -webkit-transition: opacity .3s ease-in;
@@ -61,10 +61,10 @@ template_header = """<!doctype html>
             -o-transition: opacity .3s ease-in;
             transition: opacity .3s ease-in;
             margin: 0.2em;
-        }
-        .timerLinks a.active {
+        }}
+        .timerLinks a.active {{
             opacity: 1;
-        }
+        }}
     </style>
 </head>
 <body>
