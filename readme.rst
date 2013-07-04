@@ -5,3 +5,4 @@ A collection of shell scripts written by me and my friends for convenience.
 * tz_clocks.sh: display clocks for one or more timezones.
 * prettify: prettify an IRC log (run run_prettify.py directly, or install with
   setuptools/distribute).
+* remind_me.sh: store, manage, and show reminders, ideal for use in a cronjob
