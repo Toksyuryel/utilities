@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from prettify.app import register_renderer
+from prettify.helpers import center_plaintext
 from prettify import messages
 
 def render_plaintext(line_generator, args):
@@ -88,7 +89,17 @@ def render_plaintext(line_generator, args):
             else:
                 pretty_lines[-1] += " {0}".format(text_parts.pop(0))
 
-        for line in pretty_lines: yield "{0}\n".format(line)
+        for line in pretty_lines:
+            if (args.page_width < args.screen_width) or args.screen_width == 0:
+                yield center_plaintext(
+                        "{0}{1}\n".format(
+                            line,
+                            " "*(args.page_width - len(line))
+                        ),
+                        args.screen_width
+                    )
+            else:
+                yield "{0}\n".format(line)
 
 register_renderer(render_plaintext, "plaintext", "emits reflowed plaintext",
         (('-1', '--single-pass', {
@@ -115,6 +126,16 @@ register_renderer(render_plaintext, "plaintext", "emits reflowed plaintext",
              'default': 80,
              'dest': 'page_width',
              'help': '''Width to reflow the log to.''',
+             }),
+         ('-W', '--screen-width', {
+             'action': 'store',
+             'type': int,
+             'default': 1,
+             'dest': 'screen_width',
+             'help': '''Screen width to center the log to, less than or equal to
+                        output width to use that width (i.e., effectively no
+                        centering), or 0 to attempt to guess the width (Python
+                        3.3+ only).''',
              }),
          ('-dd', '--drop-date', {
             'action': 'store_false',
