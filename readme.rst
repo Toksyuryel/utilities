@@ -7,3 +7,4 @@ A collection of shell scripts written by me and my friends for convenience.
   setuptools/distribute).
 * remind_me.sh: store, manage, and show reminders, ideal for use in a cronjob
 * t.sh: simple task list inspired heavily by http://stevelosh.com/projects/t/
+* I.sh: simple time tracker
