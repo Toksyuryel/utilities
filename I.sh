@@ -39,6 +39,7 @@ case $1 in
     started)
         [[ $# -lt 2 ]] && die "Too few arguments."
         echo "$(date --iso-8601=seconds) __ongoing__ ${@:2}" >> "$I_ACTIVITY_FILE"
+        echo Started activity \#$(wc -l < "$I_ACTIVITY_FILE")
         ;;
     finished)
         [[ $# -lt 2 ]] && die "Too few arguments."
@@ -47,6 +48,7 @@ case $1 in
         [[ -e "$I_ACTIVITY_FILE" ]] || touch "$I_ACTIVITY_FILE"
         NEW_ACTIVITIES=$(cat "$I_ACTIVITY_FILE" | sed "$2"'s/__ongoing__/'"$(date --iso-8601=seconds)"'/')
         echo "$NEW_ACTIVITIES" > "$I_ACTIVITY_FILE"
+        echo Finished activity \#$2
         ;;
     did)
         [[ $# -gt 1 ]] && die "Too many arguments."
