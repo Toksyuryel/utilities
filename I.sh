@@ -53,29 +53,13 @@ case $1 in
         echo Finished activity \#$2
         ;;
     did)
-        [[ $# -gt 2 ]] && die "Too many arguments."
+        [[ $# -gt 1 ]] && die "Too many arguments."
         [[ -e "$I_ACTIVITY_FILE" ]] || touch "$I_ACTIVITY_FILE"
-        case $2 in
-            -g) ;&
-            --graphical)
-                # FIXME: write python time grapher, hook into it
-                echo "FIXME: Not implemented yet."
-                ;;
-            '')
-                grep -v '__ongoing__' "$I_ACTIVITY_FILE" | while IFS= read -r line
-                do
-                    echo $line | awk '{ print "from", $1, "to", $2 ":" }'
-                    echo "        $(echo $line | cut -d' ' -f 3-)"
-                done
-                ;;
-            -*) ;&
-            --*)
-                die "Invalid flag $2."
-                ;;
-            *)
-                die "Too many arguments."
-                ;;
-        esac
+        grep -v '__ongoing__' "$I_ACTIVITY_FILE" | while IFS= read -r line
+        do
+            echo $line | awk '{ print "from", $1, "to", $2 ":" }'
+            echo "        $(echo $line | cut -d' ' -f 3-)"
+        done
         ;;
     am)
         [[ $# -gt 1 ]] && die "Too many arguments."
