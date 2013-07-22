@@ -41,6 +41,7 @@ case $1 in
         echo "$(date --iso-8601=seconds) __ongoing__ ${@:2}" >> "$I_ACTIVITY_FILE"
         echo Started activity \#$(wc -l < "$I_ACTIVITY_FILE")
         ;;
+    stopped) ;&
     finished)
         [[ $# -lt 2 ]] && die "Too few arguments."
         [[ $# -gt 2 ]] && die "Too many arguments."
