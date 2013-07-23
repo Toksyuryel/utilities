@@ -93,7 +93,7 @@ class ActivityLanes(list):
         num_blocks = sum(map(len, self))
         blocks = []
 
-        width = 120 * round((self.max_time - self.min_time).total_seconds() / (60 * 60))
+        width = round(120 * ((self.max_time - self.min_time).total_seconds() / (60 * 60)))
         height = (30 * len(self)) + (5 * (len(self) - 1)) + (35 * num_blocks) + 5
 
         cairo_canvas = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
@@ -107,9 +107,9 @@ class ActivityLanes(list):
 
                 blocks.append((block_rgb, activity.description))
 
-                block_x = 120 * round((activity.start_time - self.min_time).total_seconds() / (60 * 60))
+                block_x = round(120 * ((activity.start_time - self.min_time).total_seconds() / (60 * 60)))
                 block_y = 35 * lane_num
-                block_width = max(120 * round((activity.end_time - activity.start_time).total_seconds() / (60 * 60)), 1)
+                block_width = max(round(120 * ((activity.end_time - activity.start_time).total_seconds() / (60 * 60))), 1)
                 block_height = 30
 
                 cairo_context.rectangle(block_x, block_y, block_width, block_height)
