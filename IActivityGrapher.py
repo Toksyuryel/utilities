@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import cairo, colorsys, collections, dateutil.parser, random, sys
+import argparse, cairo, colorsys, collections, dateutil.parser, random, sys
 
 class Activity:
     def __init__(self, start_time, end_time, description):
@@ -140,12 +140,87 @@ class ActivityLanes(list):
         cairo_canvas.write_to_png(filename)
         print("Wrote {}!".format(filename))
 
-def main():
-    with open("/home/bitshift/.Iactivities", "r") as activity_file:
-        activities = Activity.list_from_iactivity_file(activity_file)
-        lanes = ActivityLanes(activities)
+class ActivityFile:
+    def __init__(self, filename):
+        in_file = argparse.FileType('r')(filename)
+        self.activities = Activity.list_from_iactivity_file(in_file)
+        self.filename = filename
+        in_file.close()
 
-        lanes.render((sys.argv[1:2] or ["IActivityGraph.png"])[0])
+class ActivityTime:
+    def __init__(self, date_string):
+        if date_string == "*":
+            self.time = None
+            return
+
+        try:
+            self.time = dateutil.parser.parse(date_string)
+        except:
+            raise ValueError("unparseable date format - consider ISO 8601")
+
+def main():
+    arg_parser = argparse.ArgumentParser(description="""Draw graphs of
+            activities from an I.sh activity file.""")
+
+    arg_parser.add_argument("activity_files", metavar="FILE", type=ActivityFile,
+            nargs="+", help="""An activity file to be processed. All input files
+            will be combined into a single graph.""")
+    arg_parser.add_argument("-o", "--out-file", metavar="FILE", default=None,
+            type=argparse.FileType("w"), dest="out_file", help="""The file to
+            write out the activity graph to. Defaults to IActivityGraph.png in
+            the working directory if not given.""")
+    arg_parser.add_argument("-l", "--label-files", dest="label_files",
+            action="store_true", help="""Prepend the filename in square brackets
+            to each activity description. Primarily useful when combining
+            files.""")
+    arg_parser.add_argument("-f", "--from-time", metavar="TIME", dest="from_time",
+            default=ActivityTime("*"), type=ActivityTime, help="""Time to start
+            graphing from. Any activities that start before this time will be
+            ignored. By default, all activities will be considered late enough,
+            or a * can be passed (you'll probably have to escape it in your
+            shell) to explicitly make all activities count.""")
+    arg_parser.add_argument("-t", "--to-time", metavar="TIME", dest="to_time",
+            default=ActivityTime("*"), type=ActivityTime, help="""Time to stop
+            graphing at. Any activities that finish after this time will be
+            ignored. By default, all activities will be considered early enough,
+            or a * can be passed (you'll probably have to escape it in your
+            shell) to explicitly make all activities count.""")
+    arg_parser.add_argument("-r", "--regex-filter", type=str, metavar="PATTERN",
+            default=".*", help="""Regular expression to filter by. Any
+            activities whose description (after processing, if using options
+            that modify descriptions) doesn't match this expression will be
+            ignored.""")
+
+    args = arg_parser.parse_args()
+
+    if args.out_file is None:
+        out_filename = "IActivityGraph.png"
+    else:
+        out_filename = args.out_file.name
+        args.out_file.close()
+
+    activities = []
+
+    for activity_file in args.activity_files:
+        for activity in activity_file.activities:
+            # TODO: regex match check
+            if (args.from_time.time is not None and
+                    args.from_time.time > activity.start_time):
+                continue
+            if (args.to_time.time is not None and
+                    args.to_time.time < activity.end_time):
+                continue
+
+            if args.label_files:
+                activity.description = "[{}] {}".format(activity_file.filename,
+                        activity.description)
+
+            activities.append(activity)
+
+    activities = sorted(activities)
+
+    lanes = ActivityLanes(activities)
+    lanes.render(out_filename)
 
 if __name__ == "__main__":
     main()
