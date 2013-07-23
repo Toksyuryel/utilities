@@ -89,11 +89,11 @@ class ActivityLanes(list):
             else:
                 deferred_activities.append(next_activity)
 
-    def render(self, filename):
+    def render(self, filename, width_multiplier=2):
         num_blocks = sum(map(len, self))
         blocks = []
 
-        width = round(120 * ((self.max_time - self.min_time).total_seconds() / (60 * 60)))
+        width = round(width_multiplier * 60 * ((self.max_time - self.min_time).total_seconds() / (60 * 60)))
         height = (30 * len(self)) + (5 * (len(self) - 1)) + (35 * num_blocks) + 5
 
         cairo_canvas = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
@@ -107,9 +107,9 @@ class ActivityLanes(list):
 
                 blocks.append((block_rgb, activity.description))
 
-                block_x = round(120 * ((activity.start_time - self.min_time).total_seconds() / (60 * 60)))
+                block_x = round(width_multiplier * 60 * ((activity.start_time - self.min_time).total_seconds() / (60 * 60)))
                 block_y = 35 * lane_num
-                block_width = max(round(120 * ((activity.end_time - activity.start_time).total_seconds() / (60 * 60))), 1)
+                block_width = max(round(width_multiplier * 60 * ((activity.end_time - activity.start_time).total_seconds() / (60 * 60))), 1)
                 block_height = 30
 
                 cairo_context.rectangle(block_x, block_y, block_width, block_height)
@@ -190,6 +190,11 @@ def main():
             activities whose description (after processing, if using options
             that modify descriptions) doesn't match this expression will be
             ignored.""")
+    arg_parser.add_argument("-w", "--minute-width", type=float, metavar="PIXELS",
+            default=2, dest="width_multiplier", help="""Number of pixels
+            (horizontally) that represent one minute. Can be non-integer, though
+            that will result in some (potentially unhelpful) rounding when it
+            comes to actually drawing. Defaults to 2.""")
 
     args = arg_parser.parse_args()
 
@@ -220,7 +225,7 @@ def main():
     activities = sorted(activities)
 
     lanes = ActivityLanes(activities)
-    lanes.render(out_filename)
+    lanes.render(out_filename, args.width_multiplier)
 
 if __name__ == "__main__":
     main()
