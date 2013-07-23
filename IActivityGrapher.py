@@ -106,7 +106,7 @@ class ActivityLanes(list):
 
         for lane_num, lane in enumerate(self):
             for activity in lane:
-                block_hls = ((len(blocks) / num_blocks), 0.6 - (random.random() / 4), 0.8 - (random.random() / 4))
+                block_hls = ((len(blocks) / num_blocks), 0.7 - (random.random() / 8), 1.0 - (random.random() / 6))
                 block_rgb = colorsys.hls_to_rgb(*block_hls)
                 cairo_context.set_source_rgb(*block_rgb)
 
