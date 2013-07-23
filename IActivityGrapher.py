@@ -89,7 +89,7 @@ class ActivityLanes(list):
             else:
                 deferred_activities.append(next_activity)
 
-    def render(self, filename, width_multiplier=2):
+    def render(self, filename, width_multiplier=2, solid_background=None):
         num_blocks = sum(map(len, self))
         blocks = []
 
@@ -98,6 +98,11 @@ class ActivityLanes(list):
 
         cairo_canvas = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         cairo_context = cairo.Context(cairo_canvas)
+
+        if solid_background is not None:
+            cairo_context.set_source_rgb(*solid_background)
+            cairo_context.rectangle(0, 0, width, height)
+            cairo_context.fill()
 
         for lane_num, lane in enumerate(self):
             for activity in lane:
@@ -130,7 +135,14 @@ class ActivityLanes(list):
             cairo_context.rectangle(block_x, block_y, 20, 20)
             cairo_context.fill()
 
-            cairo_context.set_source_rgb(0, 0, 0)
+            if solid_background is not None:
+                if sum(solid_background) >= 1.5:
+                    cairo_context.set_source_rgb(0, 0, 0)
+                else:
+                    cairo_context.set_source_rgb(1, 1, 1)
+            else:
+                cairo_context.set_source_rgb(0, 0, 0)
+
             cairo_context.select_font_face("Sans", cairo.FONT_SLANT_NORMAL,
                     cairo.FONT_WEIGHT_NORMAL)
             cairo_context.set_font_size(20)
@@ -157,6 +169,14 @@ class ActivityTime:
             self.time = dateutil.parser.parse(date_string)
         except:
             raise ValueError("unparseable date format - consider ISO 8601")
+
+backgrounds = {
+        "white": (1, 1, 1),
+        "black": (0, 0, 0),
+        "25grey": (0.25, 0.25, 0.25),
+        "50grey": (0.5, 0.5, 0.5),
+        "75grey": (0.75, 0.75, 0.75),
+        }
 
 def main():
     arg_parser = argparse.ArgumentParser(description="""Draw graphs of
@@ -195,6 +215,9 @@ def main():
             (horizontally) that represent one minute. Can be non-integer, though
             that will result in some (potentially unhelpful) rounding when it
             comes to actually drawing. Defaults to 2.""")
+    arg_parser.add_argument("-s", "--solid-background",
+            choices=list(backgrounds.keys()), dest="solid_background",
+            help="""Use a solid background instead of transparency.""")
 
     args = arg_parser.parse_args()
 
@@ -224,8 +247,13 @@ def main():
 
     activities = sorted(activities)
 
+    if args.solid_background is not None:
+        solid_background = backgrounds[args.solid_background]
+    else:
+        solid_background = None
+
     lanes = ActivityLanes(activities)
-    lanes.render(out_filename, args.width_multiplier)
+    lanes.render(out_filename, args.width_multiplier, solid_background)
 
 if __name__ == "__main__":
     main()
