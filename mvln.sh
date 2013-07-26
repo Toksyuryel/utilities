@@ -23,7 +23,7 @@ DIRECTORY="${@: -1}"
 [[ -d $DIRECTORY ]] || usage
 while [[ $# -gt 1 ]]
 do
-    [[ -z $DEBUG ]] || echo "mv $1 $DIRECTORY && ln -s $(realpath $DIRECTORY)/$(basename $1) $1"
-    [[ -z $DEBUG ]] && mv $1 $DIRECTORY && ln -s $(realpath $DIRECTORY)/$(basename $1) $1
+    [[ -z $DEBUG ]] || echo "mv \"$1\" \"$DIRECTORY\" && ln -s \"$(realpath \"$DIRECTORY\")/$(basename \"$1\")\" \"$1\""
+    [[ -z $DEBUG ]] && mv "$1" "$DIRECTORY" && ln -s "$(realpath "$DIRECTORY")/$(basename "$1")" "$1"
     shift
 done
