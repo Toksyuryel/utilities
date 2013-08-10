@@ -52,7 +52,7 @@ fi
 case $1 in
     show) ;&
     now)
-        osd_cat -w -d4 -l1 -A center -p top -O2 -c white -f $REMINDER_FONT <(shuf $REMINDER_FILE)
+        osd_cat -w -d4 -l1 -A center -p middle -O2 -c white -f $REMINDER_FONT <(shuf $REMINDER_FILE)
         ;;
     add) ;&
     to)
