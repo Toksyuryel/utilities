@@ -245,6 +245,10 @@ def main():
 
             activities.append(activity)
 
+    if len(activities) == 0:
+        sys.stdout.write("No activities to graph.\n")
+        return
+
     activities = sorted(activities)
 
     if args.solid_background is not None:
