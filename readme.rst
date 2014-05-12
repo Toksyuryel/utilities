@@ -10,3 +10,4 @@ A collection of shell scripts written by me and my friends for convenience.
 * I.sh: simple time tracker
 * volume_bar.sh: configurable pure-text volume bar
 * battery_bar.sh: configurable pure-text battery bar
+* e621-get.sh: e621 command-line pool/single-image/search downloader
