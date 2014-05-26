@@ -6,8 +6,12 @@ set -e
 : ${E621_PAGE_LENGTH:=100}
 
 usage () {
-    echo "Usage: $(basename "$0") [URL|ID]..."
+    echo "Usage: $(basename "$0") [OPTION] [URL|ID]..."
     echo "Download images from e621.net to the current directory."
+    echo
+    echo "Options"
+    echo "  -n, --no-fetch  just dump image urls, don't fetch"
+    echo "  -h, --help      show this help message"
     echo
     echo "URLs can point to any of the following:"
     echo "  - a single image; that image will be fetched"
@@ -76,6 +80,14 @@ fetch_url () {
     fi
 }
 
+print_id_urls() {
+    for id_url in $@ ; do
+        id="$(echo "${id_url}" | cut -d ';' -f1)"
+        url="$(echo "${id_url}" | cut -d ';' -f2)"
+        echo "${id}	${url}"
+    done
+}
+
 fetch_file_urls() {
     counter=1
     for id_url in $@ ; do
@@ -87,8 +99,15 @@ fetch_file_urls() {
 }
 
 case "$1" in
-    '')
+    '') ;&
+    '-h') ;&
+    '--help')
         usage
+        ;;
+    '-n') ;&
+    '--no-fetch')
+        shift
+        print_id_urls $(extract_file_urls "$@")
         ;;
     *)
         fetch_file_urls $(extract_file_urls "$@")
