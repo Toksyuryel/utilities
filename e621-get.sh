@@ -36,18 +36,18 @@ extract_file_urls () {
             echo_msg "#${url_counter}  Looks like a pool! Getting all image links..."
             link_id="$(echo "$link_params" | cut -d '/' -f1)"
             response="$(curl -s "https://e621.net/pool/show/${link_id}.json")"
-            echo -n "$(paste -d ';' <(echo "${response}" | jq -r '.posts[].id') <(echo "${response}" | jq -r '.posts[].file_url'))"
+            echo -n "$(paste -d ';' <(echo "${response}" | jq -r '.posts[].id') <(echo "${response}" | jq -r '.posts[].file_url')) "
         elif [ "$link_type" = "post/index" ] ; then
             echo_msg "#${url_counter}  Looks like a tag page! Getting all image links on that page (using ${E621_PAGE_LENGTH}-post page length)..."
             page_num="$(echo "$link_params" | cut -d '/' -f1)"
             tag_list="$(echo "$link_params" | cut -d '/' -f2)"
             response="$(curl -s "https://e621.net/post/index.json?limit=${E621_PAGE_LENGTH}&page=${page_num}&tags=${tag_list}")"
-            echo -n "$(paste -d ';' <(echo "${response}" | jq -r '.[].id') <(echo "${response}" | jq -r '.[].file_url'))"
+            echo -n "$(paste -d ';' <(echo "${response}" | jq -r '.[].id') <(echo "${response}" | jq -r '.[].file_url')) "
         elif [ "$link_type" = "post/show" ] ; then
             echo_msg "#${url_counter}  Looks like a single post! Getting single image link..."
             link_id="$(echo "$link_params" | cut -d '/' -f1)"
             response="$(curl -s "https://e621.net/post/show/${link_id}.json")"
-            echo -n "$(echo "${response}" | jq -r '.id');$(echo "${response}" | jq -r '.file_url')"
+            echo -n "$(echo "${response}" | jq -r '.id');$(echo "${response}" | jq -r '.file_url') "
         else
             echo_msg "#${url_counter}  Unknown link type '$link_type', please report this to <bitshift@bigmacintosh.net>"
         fi
