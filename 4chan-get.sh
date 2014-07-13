@@ -9,16 +9,18 @@ usage () {
     echo "of the current directory (named based on thread)."
     echo
     echo "Options"
-    echo "  -n, --no-fetch    just dump image urls, don't fetch"
-    echo "  -N, --fetch       reverse an earlier --no-fetch"
-    echo "  -f, --flat        don't use subdirectories"
-    echo "  -F, --no-flat     reverse an earlier --flat"
-    echo "  -r T, --repeat T  repeat process every T (where T is"
-    echo "                      a time format as defined by the"
-    echo "                      sleep command, dropping any thread"
-    echo "                      which 404s"
-    echo "  -R, --no-repeat   reverse an earlier --repeat"
-    echo "  -h, --help        show this help message"
+    echo "  -n, --no-fetch      just dump image urls, don't fetch"
+    echo "  -N, --fetch         reverse an earlier --no-fetch"
+    echo "  -f, --flat          don't use subdirectories"
+    echo "  -F, --no-flat       reverse an earlier --flat"
+    echo "  -r T, --repeat T    repeat process every T (where T is"
+    echo "                        a time format as defined by the"
+    echo "                        sleep command) dropping any thread"
+    echo "                        which 404s"
+    echo "  -R, --no-repeat     reverse an earlier --repeat"
+    echo "  -s, --suppress      suppress 'already got image #X'"
+    echo "  -S, --no-suppress   reverse an earlier --suppress"
+    echo "  -h, --help          show this help message"
 }
 
 log_msg () {
@@ -56,13 +58,18 @@ fetch_url () {
     out_fname="$2"
     out_dir="$3"
     n="$4"
+    show_repeats="$5"
 
     out_fpath="$out_dir/$out_fname"
 
     mkdir -p "$out_dir"
 
     if [ -f "$out_fpath" ] ; then
-        log_msg "Already got image #$n as '$out_fpath'"
+        if [ "$show_repeats" = "yes" ] ; then
+            log_msg "Already got image #$n as '$out_fpath'"
+        else
+            return 1  # don't count this
+        fi
     else
         curl -s "$in_url" > "$out_fpath"
         if [ -f "$out_fpath" ] ; then
@@ -71,6 +78,7 @@ fetch_url () {
             log_msg "Download failed for image #$n :("
         fi
     fi
+    return 0  # count this
 }
 
 print_urls() {
@@ -84,6 +92,7 @@ print_urls() {
 
 fetch_urls() {
     use_dirs="$1"
+    show_repeats="$2"
     counter=1
     while read url_fname_dir; do
         [ -n "$url_fname_dir" ] || continue
@@ -94,8 +103,9 @@ fetch_urls() {
         else
             out_dir="."
         fi
-        fetch_url "${url}" "${fname}" "${out_dir}" "${counter}"
-        counter=$(( counter + 1 ))
+        if fetch_url "${url}" "${fname}" "${out_dir}" "${counter}" "${show_repeats}" ; then
+            counter=$(( counter + 1 ))
+        fi
     done
 }
 
@@ -105,6 +115,7 @@ show_usage=no
 do_fetch=yes
 use_dirs=yes
 repeat=no
+show_repeats=yes
 
 if [ -z "$1" ] ; then
     show_usage=yes
@@ -152,6 +163,16 @@ while [ -n "$1" ] ; do
             repeat=no
             shift
             ;;
+        '-s') ;&
+        '--suppress')
+            show_repeats=no
+            shift
+            ;;
+        '-S') ;&
+        '--no-suppress')
+            show_repeats=yes
+            shift
+            ;;
         *)
             in_urls[${#in_urls[@]}]="$1"
             shift
@@ -162,7 +183,7 @@ done
 if [ "$do_fetch" = "no" ] ; then
     process="print_urls"
 else
-    process="fetch_urls $use_dirs"
+    process="fetch_urls $use_dirs $show_repeats"
 fi
 
 if [ "$show_usage" = "yes" ] ; then
@@ -177,6 +198,5 @@ else
         [ -n "$valid_urls" ] || break
         extract_urls "$valid_urls" 3>"$valid_urls_file" | $process
         sleep "$repeat"
-        log_msg "Repeating..."
     done
 fi
