@@ -9,11 +9,16 @@ usage () {
     echo "of the current directory (named based on thread)."
     echo
     echo "Options"
-    echo "  -n, --no-fetch  just dump image urls, don't fetch"
-    echo "  -N, --fetch     reverse an earlier --no-fetch"
-    echo "  -f, --flat      don't use subdirectories"
-    echo "  -F, --no-flat   reverse an earlier --flat"
-    echo "  -h, --help      show this help message"
+    echo "  -n, --no-fetch    just dump image urls, don't fetch"
+    echo "  -N, --fetch       reverse an earlier --no-fetch"
+    echo "  -f, --flat        don't use subdirectories"
+    echo "  -F, --no-flat     reverse an earlier --flat"
+    echo "  -r T, --repeat T  repeat process every T (where T is"
+    echo "                      a time format as defined by the"
+    echo "                      sleep command, dropping any thread"
+    echo "                      which 404s"
+    echo "  -R, --no-repeat   reverse an earlier --repeat"
+    echo "  -h, --help        show this help message"
 }
 
 log_msg () {
@@ -21,6 +26,7 @@ log_msg () {
 }
 
 extract_urls () {
+    declare -a valid_urls
     for url in $@ ; do
         link_scheme="$(echo "$url" | cut -d '/' -f1)"
         link_board="$(echo "$url" | cut -d '/' -f4)"
@@ -30,6 +36,7 @@ extract_urls () {
             log_msg "$url seems to have 404'd, or your connection's janky."
             continue
         fi
+        valid_urls[${#valid_urls[@]}]="$url"  # if still valid, add
         thread_name="$(echo "${response}" | jq -r '.posts[].semantic_url | select(. != null)' | head -n1)"
         if [ -z "$thread_name" ] ; then
             thread_name="${link_board}_${link_thread}"
@@ -41,6 +48,7 @@ extract_urls () {
             | sed 's_^_'"$link_scheme"'//i.4cdn.org/'"$link_board"'/_' \
             | sed 's|$|;'"$thread_name"'|'
     done
+    echo "${valid_urls[@]}" 1>&3  # use FD 3 to not contaminate main output
 }
 
 fetch_url () {
@@ -96,6 +104,7 @@ declare -a in_urls
 show_usage=no
 do_fetch=yes
 use_dirs=yes
+repeat=no
 
 if [ -z "$1" ] ; then
     show_usage=yes
@@ -128,6 +137,21 @@ while [ -n "$1" ] ; do
             use_dirs=yes
             shift
             ;;
+        '-r') ;&
+        '--repeat')
+            if [ -n "$2" ] ; then
+                repeat="$2"
+            else
+                echo "FATAL: --repeat takes an argument"
+                show_usage=yes
+            fi
+            shift 2
+            ;;
+        '-R') ;&
+        '--no-repeat')
+            repeat=no
+            shift
+            ;;
         *)
             in_urls[${#in_urls[@]}]="$1"
             shift
@@ -135,10 +159,24 @@ while [ -n "$1" ] ; do
     esac
 done
 
+if [ "$do_fetch" = "no" ] ; then
+    process="print_urls"
+else
+    process="fetch_urls $use_dirs"
+fi
+
 if [ "$show_usage" = "yes" ] ; then
     usage
-elif [ "$do_fetch" = "no" ] ; then
-    extract_urls "${in_urls[@]}" | print_urls
+elif [ "$repeat" = "no" ] ; then
+    extract_urls "${in_urls[@]}" 3>/dev/null | $process
 else
-    extract_urls "${in_urls[@]}" | fetch_urls "$use_dirs"
+    valid_urls_file="$(mktemp)"
+    echo -n "${in_urls[@]}" > "$valid_urls_file"
+    while true ; do
+        valid_urls="$(cat "$valid_urls_file")"
+        [ -n "$valid_urls" ] || break
+        extract_urls "$valid_urls" 3>"$valid_urls_file" | $process
+        sleep "$repeat"
+        log_msg "Repeating..."
+    done
 fi
