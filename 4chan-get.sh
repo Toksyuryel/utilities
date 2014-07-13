@@ -16,8 +16,8 @@ usage () {
     echo "  -h, --help      show this help message"
 }
 
-echo_msg () {
-    echo "$@" 1>&2
+log_msg () {
+    echo "$(date --iso-8601=seconds)	$@" 1>&2
 }
 
 extract_urls () {
@@ -27,7 +27,7 @@ extract_urls () {
         link_thread="$(echo "$url" | cut -d '/' -f6)"
         response="$(curl -s "$link_scheme//a.4cdn.org/$link_board/thread/${link_thread}.json")"
         if [ -z "$response" ] ; then
-            echo_msg "$url seems to have 404'd, or your connection's janky."
+            log_msg "$url seems to have 404'd, or your connection's janky."
             continue
         fi
         thread_name="$(echo "${response}" | jq -r '.posts[].semantic_url | select(. != null)' | head -n1)"
@@ -54,13 +54,13 @@ fetch_url () {
     mkdir -p "$out_dir"
 
     if [ -f "$out_fpath" ] ; then
-        echo_msg "Already got image #$n as '$out_fpath'"
+        log_msg "Already got image #$n as '$out_fpath'"
     else
         curl -s "$in_url" > "$out_fpath"
         if [ -f "$out_fpath" ] ; then
-            echo_msg "Downloaded image #$n as '$out_fpath'"
+            log_msg "Downloaded image #$n as '$out_fpath'"
         else
-            echo_msg "Download failed for image #$n :("
+            log_msg "Download failed for image #$n :("
         fi
     fi
 }
