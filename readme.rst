@@ -13,3 +13,4 @@ A collection of shell scripts written by me and my friends for convenience.
 * e621-get.sh: e621 command-line pool/single-image/search downloader
 * tempwatch.sh: manage the suspend/resume state of a process relative to cpu
   temp
+* 4chan-get.sh: 4chan thread image downloader, a la e621-get
