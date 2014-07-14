@@ -3,6 +3,16 @@
 # stop on unhandled error
 set -e
 
+die() {
+    echo -e $1; exit 1
+}
+
+depend() {
+    for COMMAND in $@; do
+        which $COMMAND &> /dev/null || die "FATAL: Required command '$COMMAND' is missing."
+    done
+}
+
 usage () {
     echo "Usage: $(basename "$0") [OPTION] [URL]..."
     echo "Download images from 4chan threads to subdirectories"
@@ -110,6 +120,8 @@ fetch_urls() {
 }
 
 
+depend jq curl
+
 declare -a in_urls
 show_usage=no
 do_fetch=yes
@@ -192,11 +204,15 @@ elif [ "$repeat" = "no" ] ; then
     extract_urls "${in_urls[@]}" 3>/dev/null | $process
 else
     valid_urls_file="$(mktemp)"
-    echo -n "${in_urls[@]}" > "$valid_urls_file"
+    valid_urls="${in_urls[@]}"
     while true ; do
-        valid_urls="$(cat "$valid_urls_file")"
-        [ -n "$valid_urls" ] || break
         extract_urls "$valid_urls" 3>"$valid_urls_file" | $process
-        sleep "$repeat"
+
+        valid_urls="$(cat "$valid_urls_file")"
+        if [ -n "$valid_urls" ] ; then
+            sleep "$repeat"
+        else
+            die "No more valid thread URLs, exiting."
+        fi
     done
 fi
