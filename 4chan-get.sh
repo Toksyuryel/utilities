@@ -30,6 +30,9 @@ usage () {
     echo "  -R, --no-repeat     reverse an earlier --repeat"
     echo "  -s, --suppress      suppress 'already got image #X'"
     echo "  -S, --no-suppress   reverse an earlier --suppress"
+    echo "  -c, --continue      continue downloading any threads"
+    echo "                        with directories already created"
+    echo "  -C, --no-continue   reverse an earlier --continue"
     echo "  -h, --help          show this help message"
 }
 
@@ -185,6 +188,16 @@ while [ -n "$1" ] ; do
             show_repeats=yes
             shift
             ;;
+        '-c') ;&
+        '--continue')
+            do_continue=yes
+            shift
+            ;;
+        '-C') ;&
+        '--no-continue')
+            do_continue=no
+            shift
+            ;;
         *)
             in_urls[${#in_urls[@]}]="$1"
             shift
@@ -196,6 +209,15 @@ if [ "$do_fetch" = "no" ] ; then
     process="print_urls"
 else
     process="fetch_urls $use_dirs $show_repeats"
+fi
+
+if [ "$do_continue" = "yes" ] ; then
+    for thread_folder in * ; do
+        echo "$thread_folder" | grep '^.*_[a-z0-9]*_[0-9]*$' 2>&1 >/dev/null || continue
+        thread_board="$(echo $thread_folder | cut -d'_' -f2)"
+        thread_id="$(echo $thread_folder | cut -d '_' -f3)"
+        in_urls[${#in_urls[@]}]="http://boards.4chan.org/$thread_board/thread/$thread_id"
+    done
 fi
 
 if [ "$show_usage" = "yes" ] ; then
