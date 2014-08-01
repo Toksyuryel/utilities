@@ -59,7 +59,7 @@ extract_urls () {
             thread_name="${thread_name}_${link_board}_${link_thread}"
         fi
         echo "${response}" \
-            | jq -r '.posts[] | select(.ext != null) | (.tim | tostring) + .ext + ";" + (.tim | tostring) + "_" + .filename + .ext' \
+            | jq -r '.posts[] | select(.ext != null) | (.tim | tostring) + .ext + ";" + (.tim | tostring) + "_" + (@base64 "\(.filename)") + .ext' \
             | sed 's_^_'"$link_scheme"'//i.4cdn.org/'"$link_board"'/_' \
             | sed 's|$|;'"$thread_name"'|'
     done
@@ -68,7 +68,8 @@ extract_urls () {
 
 fetch_url () {
     in_url="$1"
-    out_fname="$(echo -n "$2" | tr -c 'A-Za-z0-9.-' '_')"
+    out_fname="$2"
+    out_id="${2%%_*}"
     out_dir="$3"
     n="$4"
     show_repeats="$5"
@@ -77,9 +78,9 @@ fetch_url () {
 
     mkdir -p "$out_dir"
 
-    if [ -f "$out_fpath" ] ; then
+    if [ -n "$(find $out_dir -name "${out_id}"'_*.*' -print -quit)" ] ; then
         if [ "$show_repeats" = "yes" ] ; then
-            log_msg "Already got image #$n as '$out_fpath'"
+            log_msg "Already got image #$n"
         else
             return 1  # don't count this
         fi
