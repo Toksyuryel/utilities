@@ -68,7 +68,7 @@ extract_urls () {
 
 fetch_url () {
     in_url="$1"
-    out_fname="$2"
+    out_fname="$(echo -n "$2" | tr -c 'A-Za-z0-9.-' '_')"
     out_dir="$3"
     n="$4"
     show_repeats="$5"
