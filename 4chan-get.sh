@@ -68,7 +68,7 @@ extract_urls () {
 
 fetch_url () {
     in_url="$1"
-    out_fname="$2"
+    out_fname="$(echo "$2" | tr '+/' '-_' | tr -d '=')"
     out_id="${2%%_*}"
     out_dir="$3"
     n="$4"
