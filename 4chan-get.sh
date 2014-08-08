@@ -68,7 +68,7 @@ extract_urls () {
 
 fetch_url () {
     in_url="$1"
-    out_fname="$(echo "$2" | tr '+/' '-_' | tr -d '=')"
+    out_fname="$2"
     out_id="${2%%_*}"
     out_dir="$3"
     n="$4"
@@ -139,33 +139,27 @@ fi
 
 while [ -n "$1" ] ; do
     case "$1" in
-        '-h') ;&
-        '--help')
+        '-h' | '--help')
             show_usage=yes
             shift
             ;;
-        '-n') ;&
-        '--no-fetch')
+        '-n' | '--no-fetch')
             do_fetch=no
             shift
             ;;
-        '-N') ;&
-        '--fetch')
+        '-N' | '--fetch')
             do_fetch=yes
             shift
             ;;
-        '-f') ;&
-        '--flat')
+        '-f' | '--flat')
             use_dirs=no
             shift
             ;;
-        '-F') ;&
-        '--no-flat')
+        '-F' | '--no-flat')
             use_dirs=yes
             shift
             ;;
-        '-r') ;&
-        '--repeat')
+        '-r' | '--repeat')
             if [ -n "$2" ] ; then
                 repeat="$2"
             else
@@ -174,28 +168,23 @@ while [ -n "$1" ] ; do
             fi
             shift 2
             ;;
-        '-R') ;&
-        '--no-repeat')
+        '-R' | '--no-repeat')
             repeat=no
             shift
             ;;
-        '-s') ;&
-        '--suppress')
+        '-s' | '--suppress')
             show_repeats=no
             shift
             ;;
-        '-S') ;&
-        '--no-suppress')
+        '-S' | '--no-suppress')
             show_repeats=yes
             shift
             ;;
-        '-c') ;&
-        '--continue')
+        '-c' | '--continue')
             do_continue=yes
             shift
             ;;
-        '-C') ;&
-        '--no-continue')
+        '-C' | '--no-continue')
             do_continue=no
             shift
             ;;
@@ -229,11 +218,6 @@ else
     valid_urls_file="$(mktemp)"
     valid_urls="${in_urls[@]}"
     while true ; do
-        until (ping -n 3 8.8.8.8 2>&1 >/dev/null) ; do
-            log_msg "Connection seems to be down. Retrying in 30 seconds..."
-            sleep 30s
-        done
-        
         extract_urls "$valid_urls" 3>"$valid_urls_file" | $process
 
         valid_urls="$(cat "$valid_urls_file")"
