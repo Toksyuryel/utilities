@@ -218,6 +218,11 @@ else
     valid_urls_file="$(mktemp)"
     valid_urls="${in_urls[@]}"
     while true ; do
+        until (ping -n 3 8.8.8.8 2>&1 >/dev/null) ; do
+          log_msg "Connection seems to be down. Retrying in 30 seconds..."
+          sleep 30s
+        done
+
         extract_urls "$valid_urls" 3>"$valid_urls_file" | $process
 
         valid_urls="$(cat "$valid_urls_file")"
