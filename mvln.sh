@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 die() {
     echo -e $1; exit 1
@@ -16,14 +16,36 @@ usage() {
     exit 1
 }
 
+normalize () {
+    RUNDIR="$(pwd -L)/"
+    TARGET=$(realpath -e -s "$1")
+    NORMAL=$(echo "$TARGET" | sed "s#${RUNDIR}##g")
+    echo "$NORMAL"
+}
+
+command_gen() {
+    TARGET="$1"
+    DESTDIR="$2"
+    TEMPLATE=$(cat << %
+mv "$TARGET" "$DESTDIR" && ln -s "$(realpath -e -s "$DESTDIR")/$(basename "$TARGET")" "$TARGET"
+%
+    )
+    echo $TEMPLATE
+}
+
 depend realpath
 
-[[ $# -ge 2 ]] || usage
-DIRECTORY="${@: -1}"
-[[ -d $DIRECTORY ]] || usage
-while [[ $# -gt 1 ]]
+[ $# -ge 2 ] || usage
+DESTDIR="${@: -1}"
+[ -d "$DESTDIR" ] || usage
+while [ $# -gt 1 ]
 do
-    [[ -z $DEBUG ]] || echo "mv \"$1\" \"$DIRECTORY\" && ln -s \"$(realpath \"$DIRECTORY\")/$(basename \"$1\")\" \"$1\""
-    [[ -z $DEBUG ]] && mv "$1" "$DIRECTORY" && ln -s "$(realpath "$DIRECTORY")/$(basename "$1")" "$1"
+    TARGET=$(normalize "$1")
+    COMMAND=$(command_gen "$TARGET" "$DESTDIR")
+    if [ -z $DEBUG ]; then
+            eval "$COMMAND"
+        else
+            echo "$COMMAND"
+    fi
     shift
 done
