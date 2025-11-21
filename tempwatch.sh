@@ -29,12 +29,12 @@ while ps -p ${PID} > /dev/null
 do
     if [[ $[$(sensors -A ${SENSOR} | grep temp | cut -d+ -f2 -s | cut -d\. -f1) > ${STEMP}] -eq 1 ]]
     then
-        kill -TSTP ${PID}
+        kill -TSTP -${PID}
         until [[ $[$(sensors -A ${SENSOR} | grep temp | cut -d+ -f2 -s | cut -d\. -f1) < ${RTEMP}] -eq 1 ]]
         do
             sleep ${INTERVAL}s
         done
-        kill -CONT ${PID}
+        kill -CONT -${PID}
     fi
     sleep ${INTERVAL}s
 done
