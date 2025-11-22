@@ -40,6 +40,7 @@ DESTDIR="${@: -1}"
 [ -d "$DESTDIR" ] || usage
 while [ $# -gt 1 ]
 do
+    [ -e "$1" ] || usage
     TARGET=$(normalize "$1")
     COMMAND=$(command_gen "$TARGET" "$DESTDIR")
     if [ -z $DEBUG ]; then
