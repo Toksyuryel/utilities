@@ -9,7 +9,7 @@ die() {
 
 depend() {
     for COMMAND in $@; do
-        which $COMMAND &> /dev/null || die "FATAL: Required command '$COMMAND' is missing."
+        type $COMMAND &> /dev/null || die "FATAL: Required command '$COMMAND' is missing."
     done
 }
 
