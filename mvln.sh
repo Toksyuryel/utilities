@@ -1,18 +1,19 @@
 #!/usr/bin/env sh
 
 die() {
-    echo -e $1; exit 1
+    printf "%s" "$1"; exit 1
 }
 
 depend() {
-    for COMMAND in $@; do
-        type $COMMAND &> /dev/null || die "FATAL ERROR: Required command '$COMMAND' is missing."
+    for COMMAND in "$@"; do
+        type "$COMMAND" > /dev/null 2>&1 || die "FATAL ERROR: Required command '$COMMAND' is missing."
     done
 }
 
 usage() {
-    echo "USAGE: $(basename $0) SOURCE... DIRECTORY"
-    echo "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links."
+    BASENAME=$(basename "$0")
+    printf "USAGE: %s SOURCE... DIRECTORY" "$BASENAME"
+    printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links."
     exit 1
 }
 
@@ -30,20 +31,20 @@ command_gen() {
 mv "$TARGET" "$DESTDIR" && ln -s "$(realpath -e -s "$DESTDIR")/$(basename "$TARGET")" "$TARGET"
 %
     )
-    echo $TEMPLATE
+    echo "$TEMPLATE"
 }
 
 depend realpath
 
 [ $# -ge 2 ] || usage
-DESTDIR="${@: -1}"
+DESTDIR=$(eval "echo \$$#")
 [ -d "$DESTDIR" ] || usage
 while [ $# -gt 1 ]
 do
     [ -e "$1" ] || usage
     TARGET=$(normalize "$1")
     COMMAND=$(command_gen "$TARGET" "$DESTDIR")
-    if [ -z $DEBUG ]; then
+    if [ -z "$DEBUG" ]; then
             eval "$COMMAND"
         else
             echo "$COMMAND"
