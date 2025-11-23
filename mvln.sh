@@ -37,7 +37,7 @@ mv "$TARGET" "$DESTDIR" && ln -s "$(realpath -e -s "$DESTDIR")/$(basename "$TARG
 depend realpath
 
 [ $# -ge 2 ] || usage
-DESTDIR=$(eval "echo \$$#")
+DESTDIR=$(eval "echo \${$#}")
 [ -d "$DESTDIR" ] || usage
 while [ $# -gt 1 ]
 do
