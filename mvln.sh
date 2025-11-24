@@ -12,7 +12,7 @@ depend() {
 
 usage() {
     BASENAME=$(basename "$0")
-    printf "USAGE: %s SOURCE... DIRECTORY" "$BASENAME"
+    printf "USAGE: %s SOURCE... DIRECTORY\n" "$BASENAME"
     printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links."
     exit 1
 }
@@ -20,8 +20,8 @@ usage() {
 normalize () {
     RUNDIR="$(pwd -L)/"
     TARGET=$(realpath -e -s "$1")
-    NORMAL=$(echo "$TARGET" | sed "s#${RUNDIR}##g")
-    echo "$NORMAL"
+    NORMAL=$(printf "%s" "$TARGET" | sed "s#${RUNDIR}##g")
+    printf "%s" "$NORMAL"
 }
 
 command_gen() {
@@ -31,13 +31,13 @@ command_gen() {
 mv "$TARGET" "$DESTDIR" && ln -s "$(realpath -e -s "$DESTDIR")/$(basename "$TARGET")" "$TARGET"
 %
     )
-    echo "$TEMPLATE"
+    printf "%s" "$TEMPLATE"
 }
 
 depend realpath
 
 [ $# -ge 2 ] || usage
-DESTDIR=$(eval "echo \${$#}")
+DESTDIR=$(eval "printf '%s' \"\${$#}\"")
 [ -d "$DESTDIR" ] || usage
 while [ $# -gt 1 ]
 do
@@ -47,7 +47,7 @@ do
     if [ -z "$DEBUG" ]; then
             eval "$COMMAND"
         else
-            echo "$COMMAND"
+            printf "%s\n" "$COMMAND"
     fi
     shift
 done
