@@ -3,16 +3,6 @@
 # stop on unhandled error
 set -e
 
-die() {
-    echo -e $1; exit 1
-}
-
-depend() {
-    for COMMAND in $@; do
-        type $COMMAND &> /dev/null || die "FATAL: Required command '$COMMAND' is missing."
-    done
-}
-
 usage () {
     echo "Usage: $(basename "$0") [OPTION] [URL]..."
     echo "Download images from 4chan threads to subdirectories"
@@ -34,6 +24,16 @@ usage () {
     echo "                        with directories already created"
     echo "  -C, --no-continue   reverse an earlier --continue"
     echo "  -h, --help          show this help message"
+}
+
+die() {
+    echo -e $1; exit 1
+}
+
+depend() {
+    for COMMAND in $@; do
+        type $COMMAND &> /dev/null || die "FATAL: Required command '$COMMAND' is missing."
+    done
 }
 
 log_msg () {

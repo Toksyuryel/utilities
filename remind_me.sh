@@ -1,20 +1,5 @@
 #!/bin/bash
 
-die() {
-    echo -e $1; exit 1
-}
-
-depend() {
-    for COMMAND in $@; do
-        type $COMMAND &> /dev/null || die "FATAL ERROR: Required command '$COMMAND' is missing."
-    done
-}
-
-is_integer() {
-    [[ ! -z "$1" ]] || return 1
-    [[ -z "$(echo $1 | tr -d 0-9)" ]] || return 1
-}
-
 usage() {
         echo "USAGE: $(basename $0) COMMAND [OPTION...]"
         echo "Stores, manages, and displays short reminders."
@@ -34,6 +19,21 @@ usage() {
         echo "Currently yours is:"
         echo "$REMINDER_FONT"
         exit 1
+}
+
+die() {
+    echo -e $1; exit 1
+}
+
+depend() {
+    for COMMAND in $@; do
+        type $COMMAND &> /dev/null || die "FATAL ERROR: Required command '$COMMAND' is missing."
+    done
+}
+
+is_integer() {
+    [[ ! -z "$1" ]] || return 1
+    [[ -z "$(echo $1 | tr -d 0-9)" ]] || return 1
 }
 
 

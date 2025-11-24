@@ -1,5 +1,21 @@
 #!/bin/bash
 
+usage() {
+        echo "USAGE: $(basename $0) [-f NUM|-e NUM DESC|-h|--help|DESC|<no arguments>]"
+        echo "A task list for people who want to finish tasks."
+        echo
+        echo "  -f NUM                Finish (remove from list) task number NUM."
+        echo "  -e NUM DESC           Replace task number NUM with a new task, DESC."
+        echo "  -h, --help            Show this usage message."
+        echo "  DESC                  Add a task, described by DESC."
+        echo "  <no arguments>        List current tasks."
+        echo
+        echo "Tasks are stored in the file named in \$T_TASK_FILE, which defaults to \$HOME/.ttasks. The file will be created if nonexistent."
+        echo
+        echo "Aside: This tool very consciously mimics the interface of Steve Losh's t: http://stevelosh.com/projects/t/"
+        exit 1
+}
+
 die() {
     echo -e $1; exit 1
 }
@@ -58,22 +74,6 @@ add_task() {
 edit_task() {
     NEW_TASKS=$(read_tasks "$1" | sed -e "${2}d" ; echo "${@:3}")
     echo "${NEW_TASKS}" | write_tasks "$1"
-}
-
-usage() {
-        echo "USAGE: $(basename $0) [-f NUM|-e NUM DESC|-h|--help|DESC|<no arguments>]"
-        echo "A task list for people who want to finish tasks."
-        echo
-        echo "  -f NUM                Finish (remove from list) task number NUM."
-        echo "  -e NUM DESC           Replace task number NUM with a new task, DESC."
-        echo "  -h, --help            Show this usage message."
-        echo "  DESC                  Add a task, described by DESC."
-        echo "  <no arguments>        List current tasks."
-        echo
-        echo "Tasks are stored in the file named in \$T_TASK_FILE, which defaults to \$HOME/.ttasks. The file will be created if nonexistent."
-        echo
-        echo "Aside: This tool very consciously mimics the interface of Steve Losh's t: http://stevelosh.com/projects/t/"
-        exit 1
 }
 
 

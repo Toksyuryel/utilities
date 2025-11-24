@@ -1,5 +1,19 @@
 #!/bin/bash
 
+usage() {
+        echo "USAGE: $(basename $0) <started ACTIVITY|finished NUM|did|am>"
+        echo "A time tracker for the command line."
+        echo
+        echo "  started ACTIVITY      Make an entry for starting ACTIVITY."
+        echo "  finished NUM          Make an entry for finishing ongoing activity number NUM."
+        echo "  stopped NUM           Alias for 'finished NUM'"
+        echo "  did                   Show completed activities."
+        echo "  am                    Show ongoing activities."
+        echo
+        echo "Activities are stored in the file named in \$I_ACTIVITY_FILE, which defaults to \$HOME/.Iactivities. The file will be created if nonexistent."
+        exit 1
+}
+
 die() {
     echo -e $1; exit 1
 }
@@ -13,20 +27,6 @@ depend() {
 is_integer() {
     [[ ! -z "$1" ]] || return 1
     [[ -z "$(echo $1 | tr -d 0-9)" ]] || return 1
-}
-
-usage() {
-        echo "USAGE: $(basename $0) <started ACTIVITY|finished NUM|did|am>"
-        echo "A time tracker for the command line."
-        echo
-        echo "  started ACTIVITY      Make an entry for starting ACTIVITY."
-        echo "  finished NUM          Make an entry for finishing ongoing activity number NUM."
-        echo "  stopped NUM           Alias for 'finished NUM'"
-        echo "  did                   Show completed activities."
-        echo "  am                    Show ongoing activities."
-        echo
-        echo "Activities are stored in the file named in \$I_ACTIVITY_FILE, which defaults to \$HOME/.Iactivities. The file will be created if nonexistent."
-        exit 1
 }
 
 

@@ -1,5 +1,11 @@
 #!/usr/bin/env sh
 
+usage() {
+    printf "USAGE: %s SOURCE... DIRECTORY\n" "$(basename "$0")" 1>&2
+    printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links.\n" 1>&2
+    exit 1
+}
+
 die() {
     printf "%s\n" "$(basename "$0"): $1" 1>&2; exit 1
 }
@@ -8,12 +14,6 @@ depend() {
     for COMMAND in "$@"; do
         type "$COMMAND" > /dev/null 2>&1 || die "FATAL ERROR: Required command '$COMMAND' is missing."
     done
-}
-
-usage() {
-    printf "USAGE: %s SOURCE... DIRECTORY\n" "$(basename "$0")" 1>&2
-    printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links.\n" 1>&2
-    exit 1
 }
 
 getlast() {

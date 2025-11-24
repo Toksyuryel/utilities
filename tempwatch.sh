@@ -1,5 +1,11 @@
 #!/bin/bash
 
+usage() {
+    echo "USAGE: $(basename $0) PID SENSOR STEMP RTEMP INTERVAL"
+    echo "Suspend PID when SENSOR temp exceeds STEMP, then resume it once it falls below RTEMP. Check the temperature every INTERVAL seconds."
+    exit 1
+}
+
 die() {
     echo -e $1; exit 1
 }
@@ -8,12 +14,6 @@ depend() {
     for COMMAND in $@; do
         type $COMMAND &> /dev/null || die "FATAL ERROR: Required command '$COMMAND' is missing."
     done
-}
-
-usage() {
-    echo "USAGE: $(basename $0) PID SENSOR STEMP RTEMP INTERVAL"
-    echo "Suspend PID when SENSOR temp exceeds STEMP, then resume it once it falls below RTEMP. Check the temperature every INTERVAL seconds."
-    exit 1
 }
 
 depend sensors
