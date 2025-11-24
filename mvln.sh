@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 die() {
-    printf "%s" "$1"; exit 1
+    printf "%s\n" "$(basename "$0"): $1" 1>&2; exit 1
 }
 
 depend() {
@@ -11,27 +11,19 @@ depend() {
 }
 
 usage() {
-    BASENAME=$(basename "$0")
-    printf "USAGE: %s SOURCE... DIRECTORY\n" "$BASENAME"
-    printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links."
+    printf "USAGE: %s SOURCE... DIRECTORY\n" "$(basename "$0")" 1>&2
+    printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links.\n" 1>&2
     exit 1
 }
 
 normalize () {
-    RUNDIR="$(pwd -L)/"
-    TARGET=$(realpath -e -s "$1")
-    NORMAL=$(printf "%s" "$TARGET" | sed "s#${RUNDIR}##g")
-    printf "%s" "$NORMAL"
+    realpath -e -s "$1" | sed "s#$(pwd -L)/##"
 }
 
 command_gen() {
-    TARGET="$1"
-    DESTDIR="$2"
-    TEMPLATE=$(cat << %
-mv "$TARGET" "$DESTDIR" && ln -s "$(realpath -e -s "$DESTDIR")/$(basename "$TARGET")" "$TARGET"
+    cat << %
+mv "$1" "$2" && ln -s "$(realpath -e -s "$2")/$(basename "$1")" "$1"
 %
-    )
-    printf "%s" "$TEMPLATE"
 }
 
 depend realpath
@@ -39,11 +31,11 @@ depend realpath
 [ $# -ge 2 ] || usage
 DESTDIR=$(eval "printf '%s' \"\${$#}\"")
 [ -d "$DESTDIR" ] || usage
+
 while [ $# -gt 1 ]
 do
     [ -e "$1" ] || usage
-    TARGET=$(normalize "$1")
-    COMMAND=$(command_gen "$TARGET" "$DESTDIR")
+    COMMAND=$(command_gen "$(normalize "$1")" "$DESTDIR")
     if [ -z "$DEBUG" ]; then
             eval "$COMMAND"
         else
