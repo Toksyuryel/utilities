@@ -16,6 +16,10 @@ usage() {
     exit 1
 }
 
+getlast() {
+    eval "printf '%s' \"\${$#}\""
+}
+
 normalize () {
     realpath -e -s "$1" | sed "s#$(pwd -L)/##"
 }
@@ -29,7 +33,7 @@ mv "$1" "$2" && ln -s "$(realpath -e -s "$2")/$(basename "$1")" "$1"
 depend realpath
 
 [ $# -ge 2 ] || usage
-DESTDIR=$(eval "printf '%s' \"\${$#}\"")
+DESTDIR=$(getlast "$@")
 [ -d "$DESTDIR" ] || usage
 
 while [ $# -gt 1 ]
