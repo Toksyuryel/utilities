@@ -30,7 +30,7 @@ mv "$1" "$2" && ln -s "$(realpath -e -s "$2")/$(basename "$1")" "$1"
 %
 }
 
-depend realpath
+depend realpath sed
 
 [ $# -ge 2 ] || usage
 DESTDIR=$(getlast "$@")
