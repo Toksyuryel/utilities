@@ -17,23 +17,27 @@ depend() {
 }
 
 getlast() {
-    eval "printf '%s' \${$#}"
+    eval "printf '%s' \"\${$#}\""
+}
+
+getfullpath() {
+    printf "%s" "$(cd "$(dirname "$1")" && pwd -L)/$(basename "$1")"
 }
 
 normalize () {
-    realpath -e -s "$1" | sed "s#$(pwd -L)/##"
+    getfullpath "$1" | sed "s#$(pwd -L)/##"
 }
 
 command_gen() {
     cat << %
-mv "$1" "$2" && ln -s "$(realpath -e -s "$2")/$(basename "$1")" "$1"
+mv "$1" "$2" && ln -s "$(getfullpath "$2")/$(basename "$1")" "$1"
 %
 }
 
-depend realpath sed
+depend sed
 
 [ $# -ge 2 ] || usage
-DESTDIR=$(getlast "$@")
+DESTDIR="$(getlast "$@")"
 [ -d "$DESTDIR" ] || usage
 [ -z "$DEBUG" ] && CMD="eval" || CMD="printf %s\n"
 
