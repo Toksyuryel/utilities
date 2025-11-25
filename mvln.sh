@@ -1,23 +1,23 @@
 #!/usr/bin/env sh
 
 usage() {
-    printf "USAGE: %s SOURCE... DIRECTORY\n" "$(basename "$0")" 1>&2
-    printf "Move SOURCE(s) to DIRECTORY, leaving behind symbolic links.\n" 1>&2
+    printf 'USAGE: %s SOURCE... DIRECTORY\n' "$(basename "$0")" 1>&2
+    printf 'Move SOURCE(s) to DIRECTORY, leaving behind symbolic links.\n' 1>&2
     exit 1
 }
 
 die() {
-    printf "%s\n" "$(basename "$0"): $1" 1>&2; exit 1
+    printf '%s\n' "$(basename "$0"): $1" 1>&2; exit 1
 }
 
 depend() {
     for COMMAND in "$@"; do
-        type "$COMMAND" > /dev/null 2>&1 || die "FATAL ERROR: Required command '$COMMAND' is missing."
+        type "$COMMAND" > /dev/null 2>&1 || die "FATAL ERROR: Required utility '$COMMAND' is missing."
     done
 }
 
 getlast() {
-    eval "printf '%s' \"\${$#}\""
+    eval "printf '%s' \${$#}"
 }
 
 normalize () {
@@ -35,15 +35,11 @@ depend realpath sed
 [ $# -ge 2 ] || usage
 DESTDIR=$(getlast "$@")
 [ -d "$DESTDIR" ] || usage
+[ -z "$DEBUG" ] && CMD="eval" || CMD="printf %s\n"
 
 while [ $# -gt 1 ]
 do
     [ -e "$1" ] || usage
-    COMMAND=$(command_gen "$(normalize "$1")" "$DESTDIR")
-    if [ -z "$DEBUG" ]; then
-            eval "$COMMAND"
-        else
-            printf "%s\n" "$COMMAND"
-    fi
+    $CMD "$(command_gen "$(normalize "$1")" "$DESTDIR")"
     shift
 done
