@@ -17,7 +17,8 @@ depend() {
 }
 
 getlast() {
-    eval "printf '%s' \"\${$#}\""
+    shift $(($#-1))
+    printf '%s' "$1"
 }
 
 getfullpath() {
