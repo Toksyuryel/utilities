@@ -25,7 +25,7 @@ getfullpath() {
 }
 
 normalize () {
-    getfullpath "$1" | sed "s#$(pwd -L)/##"
+    getfullpath "$1" | sed "s#^$(printf '%s' "$(pwd -L)" | awk '{gsub(/[{[^$*?+.|\\]/, "\\\\&", $0);printf "%s", $0}')/##"
 }
 
 command_gen() {
@@ -34,7 +34,7 @@ mv "$1" "$2" && ln -s "$(getfullpath "$2")/$(basename "$1")" "$1"
 %
 }
 
-depend sed
+depend sed awk
 
 [ $# -ge 2 ] || usage
 DESTDIR="$(getlast "$@")"
