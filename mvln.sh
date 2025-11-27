@@ -22,7 +22,7 @@ getlast() {
 }
 
 getfullpath() {
-    printf "%s" "$(cd "$(dirname "$1")" && pwd -L)/$(basename "$1")"
+    printf '%s' "$(cd "$(dirname "$1")" && pwd -L)/$(basename "$1")"
 }
 
 normalize () {
@@ -38,13 +38,13 @@ mv "$1" "$2" && ln -s "$(getfullpath "$2")/$(basename "$1")" "$1"
 depend sed awk
 
 [ $# -ge 2 ] || usage
-DESTDIR="$(getlast "$@")"
-[ -d "$DESTDIR" ] || usage
+DST="$(getlast "$@")"
+[ -d "$DST" ] || usage
 [ -z "$DEBUG" ] && CMD="eval" || CMD="printf %s\n"
 
 while [ $# -gt 1 ]
 do
     [ -e "$1" ] || usage
-    $CMD "$(command_gen "$(normalize "$1")" "$DESTDIR")"
+    $CMD "$(command_gen "$(normalize "$1")" "$DST")"
     shift
 done
