@@ -24,7 +24,7 @@ getlast() {
 }
 
 getfullpath() {
-    printf '%s' "$(cd "$(dirname "$1")" && pwd -L)/$(basename "$1")"
+    printf '%s' "$(cd "$(dirname "$1")" && pwd -L)/$(basename "$1")" | sed 's#/\.$##'
 }
 
 normalize () {
@@ -59,10 +59,10 @@ DST="$(getlast "$@")"
 while [ $# -gt 1 ]
 do
     [ -e "$1" ] || usage
-    TGT="$(getfullpath "$2")/$(basename "$1")"
+    TGT="$(getfullpath "$DST")/$(basename "$1")"
     $CMD "$(command_gen "$(normalize "$1")" "$DST" "$TGT")"
     if [ -z "$DEBUG" ] && [ ! -z "$OPTV" ]; then
-        printf '%s\n' "mv: renamed '$1' -> '$DST/$(normalize "$1")'"
+        printf '%s\n' "mv: renamed '$1' -> '$(printf '%s' "$(dirname "$DST")/" | sed 's#^\./##')$(basename "$DST")/$(basename "$1")'"
         printf '%s\n' "ln: '$1' -> '$TGT'"
     fi
     shift
