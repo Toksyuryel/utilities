@@ -22,7 +22,14 @@ done
 shift $((OPTIND - 1))
 
 CAPTURE_DIR="${XDG_PICTURES_DIR:-"$HOME"/Pictures}"
-CAPTURE_PATH="${CAPTURE_DIR}/screencap_tmp.png"
+CAPTURE_FMT="png"
+CAPTURE_TMP="${CAPTURE_DIR}/screencap_tmp.${CAPTURE_FMT}"
 
-capture "$MODE" "$CAPTURE_PATH"
-mv "$CAPTURE_PATH" "${CAPTURE_DIR}/$(date +%F-%H%M%S)_$(magick identify -format '%wx%h' "$CAPTURE_PATH")_screencap.png"
+capture "$MODE" "$CAPTURE_TMP"
+
+CAPTURE_TIME="$(date +%F-%H%M%S)"
+CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
+CAPTURE_SUFX="screencap"
+CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
+mv "$CAPTURE_TMP" "$CAPTURE_PATH"
+notify-send -a "$0" "Screenshot saved" "$CAPTURE_PATH"
