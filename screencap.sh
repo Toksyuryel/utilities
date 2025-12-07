@@ -1,5 +1,23 @@
 #!/usr/bin/env sh
 
+usage() {
+  printf 'USAGE: %s [-r]\n' "$(basename "$0")" 1>&2
+  printf 'Creates and saves a screenshot.\n\n' 1>&2
+  printf 'OPTIONS:\n' 1>&2
+  printf '\t-r\t Screenshot the root window instead of a selection\n' 1>&2
+  exit 1
+}
+
+die() {
+  printf '%s\n' "$(basename $0): $1" 1>&2; exit 1
+}
+
+depend() {
+  for COMMAND in "$@"; do
+    type "$COMMAND" > /dev/null 2>&1 || die "FATAL ERROR: Required utility '$COMMAND' is missing."
+  done
+}
+
 capture() {
   if [ "$1" = "root" ]; then
     shift && set -- -window root "$@"
@@ -9,13 +27,16 @@ capture() {
   magick import -silent "$@"
 }
 
+depend magick
+xset q > /dev/null 2>&1 || die "Can't find X session."
+
 unset MODE
 
 while getopts r OPT
 do
   case $OPT in
   r)  MODE="root";;
-  ?)  printf "no";exit 1;;
+  ?)  usage;;
   esac
 done
 
@@ -23,7 +44,7 @@ shift $((OPTIND - 1))
 
 CAPTURE_DIR="${XDG_PICTURES_DIR:-"$HOME"/Pictures}"
 CAPTURE_FMT="png"
-CAPTURE_TMP="${CAPTURE_DIR}/screencap_tmp.${CAPTURE_FMT}"
+CAPTURE_TMP="${XDG_CACHE_HOME:-"$HOME"/.cache}/screencap_tmp.${CAPTURE_FMT}"
 
 capture "$MODE" "$CAPTURE_TMP"
 
