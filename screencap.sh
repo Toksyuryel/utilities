@@ -20,6 +20,18 @@ depend() {
   done
 }
 
+checkdir() {
+  for DIR in "$@"; do
+    if [ -e "$DIR" ]; then
+      [ -d "$DIR" ] || die "$DIR exists but is not a directory."
+      [ -x "$DIR" ] && [ -w "$DIR" ] || die "$DIR exists but is not writable."
+      else
+      # shellcheck disable=SC2174
+      mkdir -p -m 0700 "$DIR" || die "$DIR doesn't exist and could not be created."
+    fi
+  done
+}
+
 capture() {
   if [ "$1" = "root" ]; then
     shift && set -- -window root "$@"
@@ -44,9 +56,11 @@ done
 
 shift $((OPTIND - 1))
 
-CAPTURE_DIR="${XDG_PICTURES_DIR:-"$HOME"/Pictures}"
 CAPTURE_FMT="png"
-CAPTURE_TMP="${XDG_CACHE_HOME:-"$HOME"/.cache}/screencap_tmp.${CAPTURE_FMT}"
+CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
+CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache"}"
+checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
+CAPTURE_TMP="${CAPTURE_TMPDIR}/screencap_tmp.${CAPTURE_FMT}"
 
 capture "$MODE" "$CAPTURE_TMP"
 
