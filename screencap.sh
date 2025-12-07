@@ -1,12 +1,16 @@
 #!/usr/bin/env sh
 
 usage() {
-  printf 'USAGE: %s [-r]\n' "$(basename "$0")" 1>&2
+  printf 'USAGE: %s [-r] [-d dir]\n' "$(basename "$0")" 1>&2
   printf 'Creates and saves a screenshot.\n' 1>&2
   printf 'Left click selects a window, left click and drag selects a region.\n' 1>&2
   printf '\n' 1>&2
+  printf 'Saves into XDG_PICTURES_DIR by default, creating it if it does not exist.\n' 1>&2
+  printf 'If XDG_PICTURES_DIR is unset, ~/Pictures will be used.\n' 1>&2
+  printf '\n' 1>&2
   printf 'OPTIONS:\n' 1>&2
-  printf '\t-r\t Screenshot the entire root window instead of making a selection.\n' 1>&2
+  printf '\t-d dir\t Overide the default directory. Will be created if needed.\n' 1>&2
+  printf '\t-r\t Screenshot the entire root window instead of a selection.\n' 1>&2
   exit 1
 }
 
@@ -44,11 +48,12 @@ capture() {
 depend magick
 xset q > /dev/null 2>&1 || die "Can't find X session."
 
-unset MODE
+unset MODE CAPTURE_DIR
 
-while getopts r OPT
+while getopts d:r OPT
 do
   case $OPT in
+  d)  CAPTURE_DIR="$OPTARG";;
   r)  MODE="root";;
   ?)  usage;;
   esac
@@ -57,7 +62,7 @@ done
 shift $((OPTIND - 1))
 
 CAPTURE_FMT="png"
-CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
+[ "$CAPTURE_DIR" ] || CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
 CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache"}"
 checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
 CAPTURE_TMP="${CAPTURE_TMPDIR}/screencap_tmp.${CAPTURE_FMT}"
