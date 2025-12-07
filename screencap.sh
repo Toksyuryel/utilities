@@ -3,8 +3,8 @@
 usage() {
   printf 'USAGE: %s [-r]\n' "$(basename "$0")" 1>&2
   printf 'Creates and saves a screenshot.\n' 1>&2
-  printf 'Left click selects a window, left click and drag selects a region.\n'
-  printf '\n'
+  printf 'Left click selects a window, left click and drag selects a region.\n' 1>&2
+  printf '\n' 1>&2
   printf 'OPTIONS:\n' 1>&2
   printf '\t-r\t Screenshot the entire root window instead of making a selection.\n' 1>&2
   exit 1
@@ -69,4 +69,4 @@ CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
 CAPTURE_SUFX="screencap"
 CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
 mv "$CAPTURE_TMP" "$CAPTURE_PATH"
-notify-send -a "$0" "Screenshot saved" "$CAPTURE_PATH"
+type notify-send > /dev/null 2>&1 && notify-send -a "$0" "Screenshot saved" "$CAPTURE_PATH"
