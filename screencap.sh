@@ -2,14 +2,16 @@
 
 usage() {
   printf 'USAGE: %s [-r]\n' "$(basename "$0")" 1>&2
-  printf 'Creates and saves a screenshot.\n\n' 1>&2
+  printf 'Creates and saves a screenshot.\n' 1>&2
+  printf 'Left click selects a window, left click and drag selects a region.\n'
+  printf '\n'
   printf 'OPTIONS:\n' 1>&2
-  printf '\t-r\t Screenshot the root window instead of a selection\n' 1>&2
+  printf '\t-r\t Screenshot the entire root window instead of making a selection.\n' 1>&2
   exit 1
 }
 
 die() {
-  printf '%s\n' "$(basename $0): $1" 1>&2; exit 1
+  printf '%s\n' "$(basename "$0"): $1" 1>&2; exit 1
 }
 
 depend() {
