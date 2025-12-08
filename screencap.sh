@@ -78,7 +78,7 @@ CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache"}"
 checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
 
 CAPTURE_TMP="${CAPTURE_TMPDIR}/screencap_tmp.${CAPTURE_FMT}"
-capture "$CAPTURE_MODE" "$CAPTURE_TMP"
+capture "$CAPTURE_MODE" "$CAPTURE_TMP" || die "ABORT: import failed for an unknown reason, most likely on wayland."
 
 CAPTURE_TIME="$(date +%F-%H%M%S)"
 CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
