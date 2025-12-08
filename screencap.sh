@@ -58,9 +58,7 @@ capture() {
 }
 
 unset CAPTURE_MODE CAPTURE_DIR CAPTURE_FMT NONOTIFY
-
 type notify-send > /dev/null 2>&1 || NONOTIFY=1
-
 while getopts d:f:qr OPT; do
   case $OPT in
     d)  CAPTURE_DIR="$OPTARG" ;;
@@ -70,12 +68,11 @@ while getopts d:f:qr OPT; do
     ?)  usage ;;
   esac
 done
+shift $((OPTIND - 1))
 
 depend magick
 [ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] || die "ImageMagick import does not function on wayland."
 xset q > /dev/null 2>&1 || die "Can't find X session."
-
-shift $((OPTIND - 1))
 
 [ "$CAPTURE_FMT" ] || CAPTURE_FMT="png"
 checkfmt "$CAPTURE_FMT" || die "output format '$CAPTURE_FMT' is not supported on your system."
@@ -94,7 +91,9 @@ CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
 CAPTURE_SUFX="screencap"
 
 CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
+
 mv "$CAPTURE_TMP" "$CAPTURE_PATH"
 [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
 [ -e "$CAPTURE_ICON" ] && rm -f "$CAPTURE_ICON"
+
 exit 0
