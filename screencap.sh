@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 usage() {
-  printf 'USAGE: %s [-r] [-d dir] [-f fmt]\n' "$(basename "$0")" 1>&2
+  printf 'USAGE: %s [-qr] [-d dir] [-f fmt]\n' "$(basename "$0")" 1>&2
   printf 'Creates and saves a screenshot using ImageMagick.\n' 1>&2
   printf 'Left click selects a window, left click and drag selects a region.\n' 1>&2
   printf '\n' 1>&2
@@ -11,12 +11,15 @@ usage() {
   printf 'OPTIONS:\n' 1>&2
   printf '\t-d dir\t Override the default directory. Will be created if needed.\n' 1>&2
   printf '\t-f fmt\t Override the default output format. Default is PNG.\n' 1>&2
+  printf '\t-q\t Suppress notifications.\n' 1>&2
   printf '\t-r\t Screenshot the entire root window instead of a selection.\n' 1>&2
-  exit 1
+  die "usage error"
 }
 
 die() {
-  printf '%s\n' "$(basename "$0"): $1" 1>&2; exit 1
+  printf '%s\n' "$(basename "$0"): $1" 1>&2
+  [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -u critical -i dialog-error "Screencap failed" "$1"
+  exit 1
 }
 
 depend() {
@@ -53,20 +56,24 @@ capture() {
   magick import -silent "$@"
 }
 
-depend magick
-[ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] || die "ImageMagick import does not function on wayland."
-xset q > /dev/null 2>&1 || die "Can't find X session."
+unset CAPTURE_MODE CAPTURE_DIR CAPTURE_FMT NONOTIFY
 
-unset MODE CAPTURE_DIR CAPTURE_FMT
+type notify-send > /dev/null 2>&1 || NONOTIFY=1
 
-while getopts d:f:r OPT; do
+while getopts d:f:qr OPT; do
   case $OPT in
     d)  CAPTURE_DIR="$OPTARG" ;;
     f)  CAPTURE_FMT="$OPTARG" ;;
+    q)  NONOTIFY=1 ;;
     r)  CAPTURE_MODE="root" ;;
     ?)  usage ;;
   esac
 done
+
+depend magick
+[ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] || die "ImageMagick import does not function on wayland."
+xset q > /dev/null 2>&1 || die "Can't find X session."
+
 
 shift $((OPTIND - 1))
 
@@ -78,7 +85,9 @@ CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache"}"
 checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
 
 CAPTURE_TMP="${CAPTURE_TMPDIR}/screencap_tmp.${CAPTURE_FMT}"
+CAPTURE_ICON="${CAPTURE_TMPDIR}/screencap_icon.jpg"
 capture "$CAPTURE_MODE" "$CAPTURE_TMP" || die "ABORT: import failed for an unknown reason, most likely on wayland."
+[ -z $NONOTIFY ] && magick convert "$CAPTURE_TMP" -resize 128x128 "$CAPTURE_ICON"
 
 CAPTURE_TIME="$(date +%F-%H%M%S)"
 CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
@@ -86,4 +95,6 @@ CAPTURE_SUFX="screencap"
 
 CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
 mv "$CAPTURE_TMP" "$CAPTURE_PATH"
-type notify-send > /dev/null 2>&1 && notify-send -a "$0" "Screenshot saved" "$CAPTURE_PATH"
+[ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
+[ -e "$CAPTURE_ICON" ] && rm -f "$CAPTURE_ICON"
+exit 0
