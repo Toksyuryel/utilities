@@ -54,6 +54,7 @@ capture() {
 }
 
 depend magick
+[ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] || die "ImageMagick import does not function on wayland."
 xset q > /dev/null 2>&1 || die "Can't find X session."
 
 unset MODE CAPTURE_DIR CAPTURE_FMT
