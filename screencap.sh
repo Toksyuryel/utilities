@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# SPDX-License-Identifier: MIT
 
 usage() {
   printf 'USAGE: %s [-qr] [-d dir] [-f fmt]\n' "$(basename "$0")" 1>&2
@@ -73,7 +74,6 @@ done
 depend magick
 [ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] || die "ImageMagick import does not function on wayland."
 xset q > /dev/null 2>&1 || die "Can't find X session."
-
 
 shift $((OPTIND - 1))
 
