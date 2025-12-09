@@ -44,6 +44,7 @@ checkdir() {
   done
 }
 
+# TODO: add check for if the chosen format produces an actual image
 checkfmt() {
   magick identify -list format \
     | grep -iE '^[[:space:]]*'"$1"'(\*)?[[:space:]]+' \
@@ -84,10 +85,15 @@ checkfmt "$CAPTURE_FMT" || die "output format '$CAPTURE_FMT' is not supported on
 CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache"}"
 checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
 
+# TODO: make these temp files safer. mktemp isn't part of POSIX so this is non-trivial
 CAPTURE_TMP="${CAPTURE_TMPDIR}/screencap_tmp.${CAPTURE_FMT}"
 CAPTURE_ICON="${CAPTURE_TMPDIR}/screencap_icon.jpg"
 capture "$CAPTURE_MODE" "$CAPTURE_TMP" || die "ABORT: import failed for an unknown reason, most likely on wayland."
+# shellcheck disable=SC2064
+trap "[ -e '$CAPTURE_TMP' ] && rm -f '$CAPTURE_TMP'" EXIT HUP INT TERM
 [ -z $NONOTIFY ] && magick convert "$CAPTURE_TMP" -resize 128x128 "$CAPTURE_ICON"
+# shellcheck disable=SC2064
+[ -e "$CAPTURE_ICON" ] && trap "rm -f '$CAPTURE_ICON'" EXIT HUP INT TERM
 
 CAPTURE_TIME="$(date +%F-%H%M%S)"
 CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
@@ -97,6 +103,5 @@ CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${C
 
 mv "$CAPTURE_TMP" "$CAPTURE_PATH"
 [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
-[ -e "$CAPTURE_ICON" ] && rm -f "$CAPTURE_ICON"
 
 exit 0
