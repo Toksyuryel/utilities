@@ -2,23 +2,26 @@
 # SPDX-License-Identifier: MIT
 
 usage() {
-  printf 'USAGE: %s [-qr] [-d dir] [-f fmt]\n' "$(basename "$0")" 1>&2
-  printf 'Creates and saves a screenshot using ImageMagick.\n' 1>&2
-  printf 'Left click selects a window, left click and drag selects a region.\n' 1>&2
-  printf '\n' 1>&2
-  printf 'Saves into XDG_PICTURES_DIR by default, creating it if it does not exist.\n' 1>&2
-  printf 'If XDG_PICTURES_DIR is unset, ~/Pictures will be used.\n' 1>&2
-  printf '\n' 1>&2
-  printf 'OPTIONS:\n' 1>&2
-  printf '\t-d dir\t Override the default directory. Will be created if needed.\n' 1>&2
-  printf '\t-f fmt\t Override the default output format. Default is PNG.\n' 1>&2
-  printf '\t-q\t Suppress notifications.\n' 1>&2
-  printf '\t-r\t Screenshot the entire root window instead of a selection.\n' 1>&2
-  die "usage error"
+  cat << EOF 1>&2
+usage: $(basename "$0") [-qr] [-d dir] [-f fmt]
+Creates and saves a screenshot using ImageMagick.
+Left click selects a window, left click and drag selects a region.
+
+Saves into XDG_PICTURES_DIR by default, creating it if it does not exist.
+If XDG_PICTURES_DIR is unset, ~/Pictures will be used.
+
+OPTIONS
+  -d dir:  Override the default directory. Will be created if needed.
+  -f fmt:  Override the default output format. Default is PNG.
+  -q:      Suppress notifications.
+  -r:      Screenshot the entire root window instead of a selection.
+EOF
+  die -q "usage error"
 }
 
 die() {
-  printf '%s\n' "$(basename "$0"): $1" 1>&2
+  [ ! "$1" = "-q" ] && printf '%s\n' "$(basename "$0"): $1" 1>&2
+  [ "$1" = "-q" ] && shift
   [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -u critical -i dialog-error "Screencap failed" "$1"
   exit 1
 }
