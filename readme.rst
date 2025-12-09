@@ -14,4 +14,4 @@ A collection of shell scripts written by me and my friends for convenience.
 * tempwatch.sh: manage the suspend/resume state of a process relative to cpu
   temp
 * 4chan-get.sh: 4chan thread image downloader, a la e621-get
-* screencap.sh: wrapper for ImageMagick's import action
+* screencap.sh: screenshot nabber - wrapper around ImageMagick import
