@@ -11,7 +11,7 @@ _mkstemps() {
   else
     __suffix="$2"
     if [ ! -d "$1" ]; then
-      printf '%s' "$1" | grep "^[^X]*XXXXXX$" || return 1
+      printf '%s' "$1" | grep "^[^X]*XXXXXX$" > /dev/null 2>&1 || return 1
       [ -x "$(dirname "$1")" ] && [ -w "$(dirname "$1")" ] || return 1
       __template="$1"
     else

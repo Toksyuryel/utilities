@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: MIT
 
+# shellcheck source-path=SCRIPTDIR
+. "$(dirname "$0")/mkstemps.sh"
+
 usage() {
   cat << EOF 1>&2
 usage: $(basename "$0") [-qr] [-d dir] [-f fmt]
@@ -61,7 +64,14 @@ capture() {
   magick import -silent "$@"
 }
 
-unset CAPTURE_MODE CAPTURE_DIR CAPTURE_FMT NONOTIFY
+# shellcheck disable=SC2329
+clean() {
+  for __file in "$@"; do
+    [ -e "$__file" ] && unlink "$__file"
+  done
+}
+
+unset CAPTURE_MODE CAPTURE_DIR CAPTURE_FMT NONOTIFY tempfiles
 type notify-send > /dev/null 2>&1 || NONOTIFY=1
 while getopts d:f:qr OPT; do
   case $OPT in
@@ -82,18 +92,17 @@ xset q > /dev/null 2>&1 || die "Can't find X session."
 checkfmt "$CAPTURE_FMT" || die "output format '$CAPTURE_FMT' is not supported on your system."
 
 [ "$CAPTURE_DIR" ] || CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
-CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache"}"
+CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$(basename "$0")"}"
 checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
+trap 'clean "$CAPTURE_TMPDIR/"*' EXIT INT HUP TERM
 
-# TODO: make these temp files safer. mktemp isn't part of POSIX so this is non-trivial
-CAPTURE_TMP="${CAPTURE_TMPDIR}/screencap_tmp.${CAPTURE_FMT}"
-CAPTURE_ICON="${CAPTURE_TMPDIR}/screencap_icon.jpg"
-capture "$CAPTURE_MODE" "$CAPTURE_TMP" || die "ABORT: import failed for an unknown reason, most likely on wayland."
-# shellcheck disable=SC2064
-trap "[ -e '$CAPTURE_TMP' ] && rm -f '$CAPTURE_TMP'" EXIT HUP INT TERM
-[ -z $NONOTIFY ] && magick convert "$CAPTURE_TMP" -resize 128x128 "$CAPTURE_ICON"
-# shellcheck disable=SC2064
-[ -e "$CAPTURE_ICON" ] && trap "rm -f '$CAPTURE_ICON'" EXIT HUP INT TERM
+CAPTURE_TMP="$(_mkstemps "${CAPTURE_TMPDIR}/$(basename "$0")XXXXXX" ".${CAPTURE_FMT}")" || die "failed to create temp files"
+if [ -z $NONOTIFY ]; then
+  CAPTURE_ICON="$(_mkstemps "${CAPTURE_TMPDIR}/$(basename "$0")XXXXXX" ".jpg")" || die "failed to create temp files"
+fi
+
+capture "$CAPTURE_MODE" "$CAPTURE_TMP" || die "import failed for an unknown reason, most likely on wayland."
+[ -z $NONOTIFY ] && magick "$CAPTURE_TMP" -resize 128x128 "$CAPTURE_ICON"
 
 CAPTURE_TIME="$(date +%F-%H%M%S)"
 CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
@@ -101,7 +110,7 @@ CAPTURE_SUFX="screencap"
 
 CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
 
-mv "$CAPTURE_TMP" "$CAPTURE_PATH"
+link "$CAPTURE_TMP" "$CAPTURE_PATH" || die "rename failed"
 [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
 
 exit 0
