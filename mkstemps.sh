@@ -10,9 +10,6 @@ _mkstemps() {
     __suffix="$1"
   else
     __suffix="$2"
-  fi
-
-  if [ $# -eq 2 ]; then
     if [ ! -d "$1" ]; then
       printf '%s' "$1" | grep "^[^X]*XXXXXX$" || return 1
       [ -x "$(dirname "$1")" ] && [ -w "$(dirname "$1")" ] || return 1
