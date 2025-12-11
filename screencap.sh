@@ -111,6 +111,7 @@ CAPTURE_SUFX="screencap"
 CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
 
 link "$CAPTURE_TMP" "$CAPTURE_PATH" || die "rename failed"
+chmod "$(printf '%.4o\n' $((0666 & (~$(umask)))))" "$CAPTURE_PATH" || printf '%s\n' "$(basename "$0"): ALERT: failed to set file permissions"
 [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
 
 exit 0
