@@ -26,8 +26,14 @@ die() {
   [ ! "$1" = "-q" ] && printf '%s\n' "$(basename "$0"): $1" 1>&2
   [ "$1" = "-q" ] && shift
   [ -z $NONOTIFY ] && notify-send -a "$(basename "$0")" -u critical -i dialog-error "Screencap failed" "$1"
+  kill -ABRT -- -$$
+}
+
+# shellcheck disable=SC2329
+abort() {
   exit 1
 }
+trap 'abort' ABRT
 
 depend() (
   for command in "$@"; do
@@ -94,7 +100,7 @@ checkfmt "$CAPTURE_FMT" || die "output format '$CAPTURE_FMT' is not supported on
 [ "$CAPTURE_DIR" ] || CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
 CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$(basename "$0")"}"
 checkdir "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
-trap 'clean "$CAPTURE_TMPDIR/"*' EXIT INT HUP TERM
+trap 'clean "$CAPTURE_TMPDIR/"*' EXIT
 
 CAPTURE_TMP="$(_mkstemps "${CAPTURE_TMPDIR}/$(basename "$0")XXXXXX" ".${CAPTURE_FMT}")" || die "failed to create temp files"
 if [ -z $NONOTIFY ]; then
