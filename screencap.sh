@@ -29,23 +29,23 @@ die() {
   exit 1
 }
 
-depend() {
-  for COMMAND in "$@"; do
-    type "$COMMAND" > /dev/null 2>&1 || die "FATAL ERROR: Required utility '$COMMAND' is missing."
+depend() (
+  for command in "$@"; do
+    type "$command" > /dev/null 2>&1 || die "FATAL ERROR: Required utility '$command' is missing."
   done
-}
+)
 
-checkdir() {
-  for DIR in "$@"; do
-    if [ -e "$DIR" ]; then
-      [ -d "$DIR" ] || die "$DIR exists but is not a directory."
-      [ -x "$DIR" ] && [ -w "$DIR" ] || die "$DIR exists but is not writable."
+checkdir() (
+  for file in "$@"; do
+    if [ -e "$file" ]; then
+      [ -d "$file" ] || die "$file exists but is not a directory."
+      [ -x "$file" ] && [ -w "$file" ] || die "$file exists but is not writable."
     else
       # shellcheck disable=SC2174
-      mkdir -p -m 0700 "$DIR" || die "$DIR doesn't exist and could not be created."
+      mkdir -p -m 0700 "$file" || die "$file doesn't exist and could not be created."
     fi
   done
-}
+)
 
 # TODO: add check for if the chosen format produces an actual image
 checkfmt() {
@@ -65,11 +65,11 @@ capture() {
 }
 
 # shellcheck disable=SC2329
-clean() {
-  for __file in "$@"; do
-    [ -e "$__file" ] && unlink "$__file"
+clean() (
+  for file in "$@"; do
+    [ -e "$file" ] && unlink "$file"
   done
-}
+)
 
 unset CAPTURE_MODE CAPTURE_DIR CAPTURE_FMT NONOTIFY tempfiles
 type notify-send > /dev/null 2>&1 || NONOTIFY=1
