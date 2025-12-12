@@ -14,3 +14,4 @@ A collection of shell scripts written by me and my friends for convenience.
 * 4chan-get.sh: 4chan thread image downloader, a la e621-get
 * screencap.sh: screenshot nabber - wrapper around ImageMagick import
 * mkstemps.sh: a reimplementation of mkstemps(3) for use in POSIX-compatible shell scripts
+* common.sh: library functions used by most scripts
