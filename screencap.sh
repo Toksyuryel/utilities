@@ -95,7 +95,7 @@ CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$(basename "$0")"}"
 CAPTURE_FMT="png"
 
 unset CAPTURE_MODE QUIET
-type notify-send > /dev/null 2>&1 || QUIET=1
+type notify-send > /dev/null 2>&1 || QUIET="-q"
 while getopts d:f:qr OPT; do
   case $OPT in
     d)  CAPTURE_DIR="$OPTARG" ;;
