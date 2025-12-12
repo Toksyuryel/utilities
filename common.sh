@@ -2,9 +2,8 @@
 #
 # Common POSIX-compatible functions used by most scripts
 
-# set this to "-q" when you want calls to err from these functions to pass it
-# setting this to anything else will probably breaks something, so don't do that
-unset QUIET
+# Set this to any default options you would like passed to err invocations
+_erropts=""
 
 # err [-fqs] [msg]
 # prints a message to stderr and also sends it to the user's notification daemon
@@ -14,6 +13,8 @@ unset QUIET
 #   -s  Supress stderr
 err() (
   sev="alert"
+  # shellcheck disable=SC2086
+  set -- $_erropts "$@"
   unset quiet silent
   while getopts fqs OPT; do
     case $OPT in
@@ -51,7 +52,7 @@ _abort() {
 depend() (
   for command in "$@"; do
     type "$command" > /dev/null 2>&1 \
-      || err -f $QUIET "Can't find '$command'; is it in your PATH?"
+      || err -f "Cannot find '$command'; is it in your PATH?"
   done
 )
 
@@ -65,13 +66,13 @@ checkdir_xdg() (
   for file in "$@"; do
     if [ -e "$file" ]; then
       [ -d "$file" ] \
-        || err -f $QUIET "$file exists but is not a directory."
+        || err -f "$file exists but is not a directory."
       [ -x "$file" ] && [ -w "$file" ] \
-        || err -f $QUIET "$file exists but is not writable."
+        || err -f "$file exists but is not writable."
     else
       # shellcheck disable=SC2174
       mkdir -p -m 0700 "$file" \
-        || err -f $QUIET "$file doesn't exist and could not be created."
+        || err -f "$file does not exist and could not be created."
     fi
   done
 )
