@@ -2,20 +2,26 @@
 #
 # Common POSIX-compatible functions used by most scripts
 
-# Set this to any default options you would like passed to err invocations
+# Set this to any default options you would like passed to _err invocations
 _erropts=""
 
-# err [-fqs] [msg]
+# in dash $$ does not match the pgid, but can still be used to obtain the pgid
+pgid="$(ps -o pgid= $$ | sed 's/[[:space:]]//g')"
+
+# _err [-fqs] [msg]
 # prints a message to stderr and also sends it to the user's notification daemon
 # OPTIONS
-#   -f  Also send SIGABRT to the caller's process group. Use for fatal errors.
+#   -f  Also send SIGUSR1 to the caller's process group. Use for fatal errors.
 #   -q  Supress notifications
 #   -s  Supress stderr
-err() (
+#
+# trap the USR1 signal in your script if you want to set the exit status
+_err() (
+  trap 'exit 1' USR1  # this prevents the shell from dumping tokens
   sev="alert"
   # shellcheck disable=SC2086
   set -- $_erropts "$@"
-  unset quiet silent
+  unset quiet silent OPTIND
   while getopts fqs OPT; do
     case $OPT in
       f)  sev="failed" ;;
@@ -29,22 +35,18 @@ err() (
   msg="${1:-Unknown error}"
   app="$(basename "$0")"
 
-  [ -z $silent ] \
-    && printf '%s:%s\n' "$app" "$msg" 1>&2
-  [ -z $quiet ] \
-    && notify-send -a "$app" -u critical -i dialog-error "$app $sev" "$msg"
-  [ "$sev" = "failed" ] && kill -ABRT -- -$$
-  return 0
+  [ "$silent" = "1" ] \
+    || printf '%s: %s\n' "$app" "$msg" 1>&2
+  [ "$quiet" = "1" ] \
+    || notify-send -a "$app" -u critical -i dialog-error "$app $sev" "$msg"
+  if [ "$sev" = "failed" ]; then
+    kill -s USR1 -- "-$pgid"
+    sleep 5s # this is hopefully long enough for a response
+    return 1 # communicate the failure and pray
+  else
+    return 0
+  fi
 )
-
-# This exists only to catch SIGABRT and set a more useful exit status
-# Please never call this manually
-# shellcheck disable=SC2329
-_abort() {
-  exit 1
-}
-# Add the following line to your script if you want to use this function
-# trap '_abort' ABRT
 
 # depend [name ...]
 # Aborts execution and reports an error messsage if
@@ -52,7 +54,7 @@ _abort() {
 depend() (
   for command in "$@"; do
     type "$command" > /dev/null 2>&1 \
-      || err -f "Cannot find '$command'; is it in your PATH?"
+      || _err -f "Cannot find '$command'; is it in your PATH?"
   done
 )
 
@@ -66,13 +68,13 @@ checkdir_xdg() (
   for file in "$@"; do
     if [ -e "$file" ]; then
       [ -d "$file" ] \
-        || err -f "$file exists but is not a directory."
+        || _err -f "$file exists but is not a directory."
       [ -x "$file" ] && [ -w "$file" ] \
-        || err -f "$file exists but is not writable."
+        || _err -f "$file exists but is not writable."
     else
       # shellcheck disable=SC2174
       mkdir -p -m 0700 "$file" \
-        || err -f "$file does not exist and could not be created."
+        || _err -f "$file does not exist and could not be created."
     fi
   done
 )
@@ -80,10 +82,11 @@ checkdir_xdg() (
 # _clean [file ...]
 # Safely deletes each provided file. Use for cleaning up temporary files.
 # Set a trap on EXIT to run this automatically when your script exits
+# 
+# example usage:
+#   trap '_clean "${tmpdir}/*"' EXIT
 _clean() (
   for file in "$@"; do
     [ -e "$file" ] && unlink "$file"
   done
 )
-# example usage:
-# trap '_clean "${tmpdir}/*"' EXIT
