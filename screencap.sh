@@ -22,6 +22,7 @@ EOF
 }
 
 checkfmt() (
+  unset msg
   magick identify -list format \
     | grep -iE '^[[:space:]]*'"$1"'(\*)?[[:space:]]+' \
     | awk '{ print $3 }' \
@@ -29,7 +30,7 @@ checkfmt() (
     || msg="format '$CAPTURE_FMT' not supported"
   if [ ! "$msg" ]; then
     # shellcheck disable=SC2031
-    fmt_tmp="$(_mkstemps "$template" ".$CAPTURE_FMT")" \
+    fmt_tmp="$(mkstemps "$template" ".$CAPTURE_FMT")" \
       || msg="failed to create temp files"
     if [ ! "$msg" ]; then
       magick -size 1x1 xc:black "$fmt_tmp"
@@ -89,10 +90,10 @@ error="$(checkdir_xdg "$CAPTURE_DIR" "$CAPTURE_TMPDIR")"
 trap 'clean "$CAPTURE_TMPDIR/"*' EXIT
 
 template="${CAPTURE_TMPDIR}/${app}XXXXXX"
-CAPTURE_TMP="$(_mkstemps "$template" ".${CAPTURE_FMT}")" \
+CAPTURE_TMP="$(mkstemps "$template" ".${CAPTURE_FMT}")" \
   || die "failed to create temp files"
 if [ ! "$quiet" ]; then
-  CAPTURE_ICON="$(_mkstemps "$template" ".jpg")" \
+  CAPTURE_ICON="$(mkstemps "$template" ".jpg")" \
     || die "failed to create temp files"
 fi
 

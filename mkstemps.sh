@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: MIT
 # 
-# _mkstemps [template] suffix
+# mkstemps [template] suffix
 # a reimplementation of mkstemps(3) for use in POSIX-compatible shell scripts
 # needed because mktemp is not in POSIX and m4 only provides mkstemp
-_mkstemps() (
+mkstemps() (
   [ $# -gt 0 ] && [ $# -lt 3 ] || return 1
 
   if [ $# -eq 1 ]; then
