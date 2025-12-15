@@ -18,7 +18,7 @@ OPTIONS
   -q:      Suppress notifications.
   -r:      Select the root window.
 EOF
-  _err -fs "usage error"
+  die -s "usage error"
 }
 
 # TODO: add check for if the chosen format produces an actual image
@@ -41,54 +41,63 @@ capture() {
 trap 'exit 1' USR1
 
 CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
-CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$(basename "$0")"}"
+CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$app"}"
 CAPTURE_FMT="png"
 
 unset CAPTURE_MODE OPTIND
-type notify-send > /dev/null 2>&1 || _erropts="-q"
+type notify-send > /dev/null 2>&1 || set -- "-q" "$@"
 while getopts d:f:qr OPT; do
   case $OPT in
     d)  CAPTURE_DIR="$OPTARG" ;;
     f)  CAPTURE_FMT="$OPTARG" ;;
-    q)  _erropts="-q" ;;
+    q)  quiet=1; erropts="-q" ;;
     r)  CAPTURE_MODE="root" ;;
     ?)  usage ;;
   esac
 done
 shift $((OPTIND - 1))
 
-depend magick
+unset error
+error="$(depend magick)"
+[ ! "$error" ] || die "$error"
+
 [ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] \
-  || _err -f "ImageMagick import does not function on wayland."
-xset q > /dev/null 2>&1 || _err -f "Can't find X session."
+  || die "ImageMagick import does not function on wayland."
+xset q > /dev/null 2>&1 || die "Can't find X session."
 
 checkfmt "$CAPTURE_FMT" \
-  || _err -f "output format '$CAPTURE_FMT' is not supported on your system."
-checkdir_xdg "$CAPTURE_DIR" "$CAPTURE_TMPDIR"
-trap '_clean "$CAPTURE_TMPDIR/"*' EXIT
+  || die "output format '$CAPTURE_FMT' is not supported on your system."
 
-CAPTURE_TMP="$(_mkstemps "${CAPTURE_TMPDIR}/$(basename "$0")XXXXXX" ".${CAPTURE_FMT}")" \
-  || _err -f "failed to create temp files"
-if [ -z "$_erropts" ]; then
-  CAPTURE_ICON="$(_mkstemps "${CAPTURE_TMPDIR}/$(basename "$0")XXXXXX" ".jpg")" \
-    || _err -f "failed to create temp files"
+unset error
+error="$(checkdir_xdg "$CAPTURE_DIR" "$CAPTURE_TMPDIR")"
+[ ! "$error" ] || die "$error"
+
+trap 'clean "$CAPTURE_TMPDIR/"*' EXIT
+
+template="${CAPTURE_TMPDIR}/${app}XXXXXX"
+CAPTURE_TMP="$(_mkstemps "$template" ".${CAPTURE_FMT}")" \
+  || die "failed to create temp files"
+if [ ! "$quiet" ]; then
+  CAPTURE_ICON="$(_mkstemps "$template" ".jpg")" \
+    || die "failed to create temp files"
 fi
 
 capture "$CAPTURE_MODE" "$CAPTURE_TMP" \
-  || _err -f "import failed for an unknown reason, most likely on wayland."
-[ -z "$_erropts" ] \
+  || die "import failed for an unknown reason, most likely on wayland."
+[ ! "$quiet" ] \
   && magick "$CAPTURE_TMP" -resize 128x128 "$CAPTURE_ICON"
 
 CAPTURE_TIME="$(date +%F-%H%M%S)"
 CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
 CAPTURE_SUFX="screencap"
 
-CAPTURE_PATH="${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
+CAPTURE_PATH=\
+"${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
 
-link "$CAPTURE_TMP" "$CAPTURE_PATH" || _err -f "rename failed"
+link "$CAPTURE_TMP" "$CAPTURE_PATH" || die "rename failed"
 chmod "$(printf '%.4o' $((0666 & (~$(umask)))))" "$CAPTURE_PATH" \
-  || _err "ALERT: failed to set file permissions"
-[ -z "$_erropts" ] \
-  && notify-send -a "$(basename "$0")" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
+  || err "failed to set file permissions"
+[ ! "$quiet" ] \
+  && notify-send -a "$app" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
 
 exit 0
