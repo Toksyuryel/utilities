@@ -45,7 +45,11 @@ CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$app"}"
 CAPTURE_FMT="png"
 
 unset CAPTURE_MODE OPTIND
-type notify-send > /dev/null 2>&1 || set -- "-q" "$@"
+# shellcheck disable=SC2015
+depend dbus-send notify-send > /dev/null 2>&1 \
+  && dbus-send --dest=org.freedesktop.Notifications / \
+     org.freedesktop.DBus.Peer.Ping > /dev/null 2>&1 \
+  || set -- "-q" "$@"
 while getopts d:f:qr OPT; do
   case $OPT in
     d)  CAPTURE_DIR="$OPTARG" ;;
