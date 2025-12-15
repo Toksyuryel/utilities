@@ -39,11 +39,7 @@ checkfmt() (
         || msg="format '$1' not an image"
     fi
   fi
-  if [ "$msg" ]; then
-    printf '%s' "$msg"
-    return 1
-  fi
-  return 0
+  [ "$msg" ] && printf '%s' "$msg"
 )
 
 capture() {
