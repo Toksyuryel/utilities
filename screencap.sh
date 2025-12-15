@@ -30,8 +30,8 @@ checkfmt() (
     | grep -q 'w' \
     || msg="format '$1' not supported"
   if [ ! "$msg" ]; then
-    fmt_tmp="$(mkstemps "$2" ".$1")" \
-      || msg="failed to create temp files"
+    fmt_tmp="$(mkstemps "$2" ".$1")"
+    [ -e "$fmt_tmp" ] || msg="failed to create temp files"
     if [ ! "$msg" ]; then
       magick -size 1x1 xc:black "$fmt_tmp"
       magick "$fmt_tmp" "${fmt_tmp}.jpg" > /dev/null 2>&1 \
@@ -90,11 +90,11 @@ error="$(checkdir_xdg "$outdir" "$tmpdir")"
 trap 'clean "${tmpdir}/"*' EXIT
 
 template="${tmpdir}/${app}XXXXXX"
-tmpname="$(mkstemps "$template" ".$format")" \
-  || die "failed to create temp files"
+tmpname="$(mkstemps "$template" ".$format")"
+[ -e "$tmpname" ] || die "failed to create temp files"
 if [ ! "$quiet" ]; then
-  icon="$(mkstemps "$template" ".jpg")" \
-    || die "failed to create temp files"
+  icon="$(mkstemps "$template" ".jpg")"
+  [ -e "$icon" ] || die "failed to create temp files"
 fi
 
 error="$(checkfmt "$format" "$template")"
