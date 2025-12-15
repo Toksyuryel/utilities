@@ -1,13 +1,14 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: MIT
 
+appdir="$(dirname "$0")"
 # shellcheck source-path=SCRIPTDIR
-. "$(dirname "$0")/common.sh"
-. "$(dirname "$0")/mkstemps.sh"
+. "${appdir}/common.sh"
+. "${appdir}/mkstemps.sh"
 
 usage() {
   cat << EOF 1>&2
-usage: $(basename "$0") [-qr] [-d dir] [-f fmt]
+usage: $app [-qr] [-d dir] [-f fmt]
 Creates and saves a screenshot using ImageMagick.
 Left click selects a window, left click and drag selects a region.
 
@@ -27,15 +28,14 @@ checkfmt() (
     | grep -iE '^[[:space:]]*'"$1"'(\*)?[[:space:]]+' \
     | awk '{ print $3 }' \
     | grep -q 'w' \
-    || msg="format '$CAPTURE_FMT' not supported"
+    || msg="format '$1' not supported"
   if [ ! "$msg" ]; then
-    # shellcheck disable=SC2031
-    fmt_tmp="$(mkstemps "$template" ".$CAPTURE_FMT")" \
+    fmt_tmp="$(mkstemps "$2" ".$1")" \
       || msg="failed to create temp files"
     if [ ! "$msg" ]; then
       magick -size 1x1 xc:black "$fmt_tmp"
       magick "$fmt_tmp" "${fmt_tmp}.jpg" > /dev/null 2>&1 \
-        || msg="format '$CAPTURE_FMT' not an image"
+        || msg="format '$1' not an image"
     fi
   fi
   if [ "$msg" ]; then
@@ -56,22 +56,22 @@ capture() {
 
 trap 'exit 1' USR1
 
-CAPTURE_DIR="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
-CAPTURE_TMPDIR="${XDG_CACHE_HOME:-"${HOME}/.cache/$app"}"
-CAPTURE_FMT="png"
+outdir="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
+tmpdir="${XDG_CACHE_HOME:-"${HOME}/.cache/$app"}"
+format="png"
 
-unset CAPTURE_MODE OPTIND
+unset mode OPTIND
 # shellcheck disable=SC2015
 depend dbus-send notify-send > /dev/null 2>&1 \
   && dbus-send --dest=org.freedesktop.Notifications / \
      org.freedesktop.DBus.Peer.Ping > /dev/null 2>&1 \
   || set -- "-q" "$@"
-while getopts d:f:qr OPT; do
-  case $OPT in
-    d)  CAPTURE_DIR="$OPTARG" ;;
-    f)  CAPTURE_FMT="$OPTARG" ;;
+while getopts d:f:qr opt; do
+  case $opt in
+    d)  outdir="$OPTARG" ;;
+    f)  format="$OPTARG" ;;
     q)  quiet=1; erropts="-q" ;;
-    r)  CAPTURE_MODE="root" ;;
+    r)  mode="root" ;;
     ?)  usage ;;
   esac
 done
@@ -84,38 +84,37 @@ error="$(depend magick)"
   || die "ImageMagick import does not function on wayland."
 xset q > /dev/null 2>&1 || die "Can't find X session."
 
-error="$(checkdir_xdg "$CAPTURE_DIR" "$CAPTURE_TMPDIR")"
+error="$(checkdir_xdg "$outdir" "$tmpdir")"
 [ ! "$error" ] || die "$error"
 
-trap 'clean "$CAPTURE_TMPDIR/"*' EXIT
+trap 'clean "${tmpdir}/"*' EXIT
 
-template="${CAPTURE_TMPDIR}/${app}XXXXXX"
-CAPTURE_TMP="$(mkstemps "$template" ".${CAPTURE_FMT}")" \
+template="${tmpdir}/${app}XXXXXX"
+tmpname="$(mkstemps "$template" ".$format")" \
   || die "failed to create temp files"
 if [ ! "$quiet" ]; then
-  CAPTURE_ICON="$(mkstemps "$template" ".jpg")" \
+  icon="$(mkstemps "$template" ".jpg")" \
     || die "failed to create temp files"
 fi
 
-error="$(checkfmt "$CAPTURE_FMT")"
+error="$(checkfmt "$format" "$template")"
 [ ! "$error" ] || die "$error"
 
-capture "$CAPTURE_MODE" "$CAPTURE_TMP" \
+capture "$mode" "$tmpname" \
   || die "import failed for an unknown reason, most likely on wayland."
 [ ! "$quiet" ] \
-  && magick "$CAPTURE_TMP" -resize 128x128 "$CAPTURE_ICON"
+  && magick "$tmpname" -resize 128x128 "$icon"
 
-CAPTURE_TIME="$(date +%F-%H%M%S)"
-CAPTURE_DIMS="$(magick identify -format '%wx%h' "$CAPTURE_TMP")"
-CAPTURE_SUFX="screencap"
+time="$(date +%F-%H%M%S)"
+dims="$(magick identify -format '%wx%h' "$tmpname")"
+suffix="screencap"
 
-CAPTURE_PATH=\
-"${CAPTURE_DIR}/${CAPTURE_TIME}_${CAPTURE_DIMS}_${CAPTURE_SUFX}.${CAPTURE_FMT}"
+outname="${outdir}/${time}_${dims}_${suffix}.${format}"
 
-link "$CAPTURE_TMP" "$CAPTURE_PATH" || die "rename failed"
-chmod "$(printf '%.4o' $((0666 & (~$(umask)))))" "$CAPTURE_PATH" \
+link "$tmpname" "$outname" || die "rename failed"
+chmod "$(printf '%.4o' $((0666 & (~$(umask)))))" "$outname" \
   || err "failed to set file permissions"
 [ ! "$quiet" ] \
-  && notify-send -a "$app" -i "$CAPTURE_ICON" "Screenshot saved" "$CAPTURE_PATH"
+  && notify-send -a "$app" -i "$icon" "Screenshot saved" "$outname"
 
 exit 0
