@@ -21,13 +21,28 @@ EOF
   die -s "usage error"
 }
 
-# TODO: add check for if the chosen format produces an actual image
-checkfmt() {
+checkfmt() (
   magick identify -list format \
     | grep -iE '^[[:space:]]*'"$1"'(\*)?[[:space:]]+' \
     | awk '{ print $3 }' \
-    | grep -q 'w'
-}
+    | grep -q 'w' \
+    || msg="format '$CAPTURE_FMT' not supported"
+  if [ ! "$msg" ]; then
+    # shellcheck disable=SC2031
+    fmt_tmp="$(_mkstemps "$template" ".$CAPTURE_FMT")" \
+      || msg="failed to create temp files"
+    if [ ! "$msg" ]; then
+      magick -size 1x1 xc:black "$fmt_tmp"
+      magick "$fmt_tmp" "${fmt_tmp}.jpg" > /dev/null 2>&1 \
+        || msg="format '$CAPTURE_FMT' not an image"
+    fi
+  fi
+  if [ "$msg" ]; then
+    printf '%s' "$msg"
+    return 1
+  fi
+  return 0
+)
 
 capture() {
   if [ "$1" = "root" ]; then
@@ -61,7 +76,6 @@ while getopts d:f:qr OPT; do
 done
 shift $((OPTIND - 1))
 
-unset error
 error="$(depend magick)"
 [ ! "$error" ] || die "$error"
 
@@ -69,10 +83,6 @@ error="$(depend magick)"
   || die "ImageMagick import does not function on wayland."
 xset q > /dev/null 2>&1 || die "Can't find X session."
 
-checkfmt "$CAPTURE_FMT" \
-  || die "output format '$CAPTURE_FMT' is not supported on your system."
-
-unset error
 error="$(checkdir_xdg "$CAPTURE_DIR" "$CAPTURE_TMPDIR")"
 [ ! "$error" ] || die "$error"
 
@@ -85,6 +95,9 @@ if [ ! "$quiet" ]; then
   CAPTURE_ICON="$(_mkstemps "$template" ".jpg")" \
     || die "failed to create temp files"
 fi
+
+error="$(checkfmt "$CAPTURE_FMT")"
+[ ! "$error" ] || die "$error"
 
 capture "$CAPTURE_MODE" "$CAPTURE_TMP" \
   || die "import failed for an unknown reason, most likely on wayland."
