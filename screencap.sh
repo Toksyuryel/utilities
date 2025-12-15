@@ -24,15 +24,16 @@ EOF
 
 checkfmt() (
   unset msg
-  magick identify -list format \
+  if ! magick identify -list format \
     | grep -iE '^[[:space:]]*'"$1"'(\*)?[[:space:]]+' \
     | awk '{ print $3 }' \
-    | grep -q 'w' \
-    || msg="format '$1' not supported"
-  if [ ! "$msg" ]; then
+    | grep -q 'w'; then
+    msg="format '$1' not supported"
+  else
     fmt_tmp="$(mkstemps "$2" ".$1")"
-    [ -e "$fmt_tmp" ] || msg="failed to create temp files"
-    if [ ! "$msg" ]; then
+    if [ ! -e "$fmt_tmp" ]; then
+      msg="failed to create temp files"
+    else
       magick -size 1x1 xc:black "$fmt_tmp"
       magick "$fmt_tmp" "${fmt_tmp}.jpg" > /dev/null 2>&1 \
         || msg="format '$1' not an image"
