@@ -47,11 +47,11 @@ checkfmt() (
 
 capture() {
   if [ "$1" = "root" ]; then
-    shift && set -- -window root "$@"
+    shift && set -- -window 'root' "$@"
   else
     shift
   fi
-  magick import -silent "$@"
+  magick import -identify -format '%wx%h' -silent -screen "$@"
 }
 
 trap 'exit 1' USR1
@@ -97,13 +97,12 @@ fi
 
 error="$(checkfmt "$format" "$template")" || die "$error"
 
-capture "$mode" "$tmpname" \
+dims="$(capture "$mode" "$tmpname")" \
   || die "import failed for an unknown reason, most likely on wayland."
 [ ! "$quiet" ] \
   && magick "$tmpname" -resize 128x128 "$icon"
 
 time="$(date +%F-%H%M%S)"
-dims="$(magick identify -format '%wx%h' "$tmpname")"
 suffix="screencap"
 
 outname="${outdir}/${time}_${dims}_${suffix}.${format}"
