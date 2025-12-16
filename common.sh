@@ -46,6 +46,7 @@ err() (
     || _print_err "$@"
   [ "$quiet" ] \
     || _notify_err "$title" "$@"
+  return 0
 )
 
 # die [options] [msg ...]
@@ -65,6 +66,7 @@ depend() (
       return 1
     fi
   done
+  return 0
 )
 
 # checkdir_xdg [name ...]
@@ -92,6 +94,7 @@ checkdir_xdg() (
       return 1
     fi
   done
+  return 0
 )
 
 # clean [file ...]

@@ -30,8 +30,7 @@ checkfmt() (
     | grep -q 'w'; then
     msg="format '$1' not supported"
   else
-    fmt_tmp="$(mkstemps "$2" ".$1")"
-    if [ ! -e "$fmt_tmp" ]; then
+    if ! fmt_tmp="$(mkstemps "$2" ".$1")"; then
       msg="failed to create temp files"
     else
       magick -size 1x1 xc:black "$fmt_tmp"
@@ -39,7 +38,11 @@ checkfmt() (
         || msg="format '$1' not an image"
     fi
   fi
-  [ "$msg" ] && printf '%s' "$msg"
+  if [ "$msg" ]; then
+    printf '%s' "$msg"
+    return 1
+  fi
+  return 0
 )
 
 capture() {
@@ -74,28 +77,25 @@ while getopts d:f:qr opt; do
 done
 shift $((OPTIND - 1))
 
-error="$(depend magick)"
-[ ! "$error" ] || die "$error"
+error="$(depend magick)" || die "$error"
 
 [ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] \
   || die "ImageMagick import does not function on wayland."
 xset q > /dev/null 2>&1 || die "Can't find X session."
 
-error="$(checkdir_xdg "$outdir" "$tmpdir")"
-[ ! "$error" ] || die "$error"
+error="$(checkdir_xdg "$outdir" "$tmpdir")" || die "$error"
 
 trap 'clean "${tmpdir}/"*' EXIT
 
 template="${tmpdir}/${app}XXXXXX"
-tmpname="$(mkstemps "$template" ".$format")"
-[ -e "$tmpname" ] || die "failed to create temp files"
+tmpname="$(mkstemps "$template" ".$format")" \
+  || die "failed to create temp files"
 if [ ! "$quiet" ]; then
-  icon="$(mkstemps "$template" ".jpg")"
-  [ -e "$icon" ] || die "failed to create temp files"
+  icon="$(mkstemps "$template" ".jpg")" \
+    || die "failed to create temp files"
 fi
 
-error="$(checkfmt "$format" "$template")"
-[ ! "$error" ] || die "$error"
+error="$(checkfmt "$format" "$template")" || die "$error"
 
 capture "$mode" "$tmpname" \
   || die "import failed for an unknown reason, most likely on wayland."

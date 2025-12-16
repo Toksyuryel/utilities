@@ -4,20 +4,22 @@
 # a reimplementation of mkstemps(3) for use in POSIX-compatible shell scripts
 # needed because mktemp is not in POSIX and m4 only provides mkstemp
 mkstemps() (
-  [ $# -gt 0 ] && [ $# -lt 3 ] || return 1
-
+  unset template
   if [ $# -eq 1 ]; then
     suffix="$1"
-  else
+  elif [ $# -eq 2 ]; then
     suffix="$2"
     if [ ! -d "$1" ]; then
       printf '%s' "$1" | grep "^[^X]*XXXXXX$" > /dev/null 2>&1 || return 1
-      [ -x "$(dirname "$1")" ] && [ -w "$(dirname "$1")" ] || return 1
+      tmpdir="$(dirname "$1")"
       template="$1"
     else
-      [ -x "$1" ] && [ -w "$1" ] || return 1
+      tmpdir="$1"
       template="${1}/"
     fi
+    [ -x "$tmpdir" ] && [ -w "$tmpdir" ] || return 1
+  else
+    return 1
   fi
 
   while
