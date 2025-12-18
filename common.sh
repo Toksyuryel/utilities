@@ -60,7 +60,7 @@ die() {
 # depend [name ...]
 # reports an error if any name is missing from the user's path
 depend() (
-  for command in "$@"; do
+  for command; do
     if ! type "$command" > /dev/null 2>&1; then
       printf '%s' "Cannot find '$command'; is it in your PATH?"
       return 1
@@ -78,7 +78,7 @@ depend() (
 #   or report an error if it cannot
 checkdir_xdg() (
   unset msg
-  for file in "$@"; do
+  for file; do
     if [ -d "$file" ]; then
       [ -x "$file" ] && [ -w "$file" ] \
         || msg="$file exists but is not writable."
@@ -104,7 +104,7 @@ checkdir_xdg() (
 # example usage:
 #   trap 'clean "${tmpdir}/*"' EXIT
 clean() (
-  for file in "$@"; do
+  for file; do
     [ -e "$file" ] && unlink "$file"
   done
 )

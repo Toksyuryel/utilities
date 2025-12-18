@@ -8,7 +8,7 @@ appdir="$(dirname "$0")"
 
 usage() {
   cat << EOF 1>&2
-usage: $app [-qr] [-d dir] [-f fmt]
+usage: $app [-qrs] [-d dir] [-f fmt]
 Creates and saves a screenshot using ImageMagick.
 Left click selects a window, left click and drag selects a region.
 
@@ -18,6 +18,7 @@ OPTIONS
   -f fmt:  Output format. (Default: png)
   -q:      Suppress notifications.
   -r:      Select the root window.
+  -s:      Improves window selection; breaks region selection.
 EOF
   die -s "usage error"
 }
@@ -46,15 +47,13 @@ checkfmt() (
 )
 
 capture() {
-  if [ "$1" = "root" ]; then
-    shift && set -- -window 'root' "$@"
-  else
-    shift
-  fi
-  magick import -identify -format '%wx%h' -silent -screen "$@"
+  mode="$1"; shift
+  case "$mode" in
+    r)  set -- -window 'root' "$@" ;;
+    s)  set -- -screen "$@" ;;
+  esac
+  magick import -identify -format '%wx%h' -silent "$@"
 }
-
-trap 'exit 1' USR1
 
 outdir="${XDG_PICTURES_DIR:-"${HOME}/Pictures"}"
 tmpdir="${XDG_CACHE_HOME:-"${HOME}/.cache/$app"}"
@@ -66,12 +65,13 @@ depend dbus-send notify-send > /dev/null 2>&1 \
   && dbus-send --dest=org.freedesktop.Notifications / \
      org.freedesktop.DBus.Peer.Ping > /dev/null 2>&1 \
   || set -- "-q" "$@"
-while getopts d:f:qr opt; do
+while getopts d:f:qrs opt; do
   case $opt in
     d)  outdir="$OPTARG" ;;
     f)  format="$OPTARG" ;;
     q)  quiet=1; erropts="-q" ;;
-    r)  mode="root" ;;
+    r)  mode="r" ;;
+    s)  mode="s" ;;
     ?)  usage ;;
   esac
 done
