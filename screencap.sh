@@ -31,11 +31,12 @@ checkfmt() (
     | grep -q 'w'; then
     msg="format '$1' not supported"
   else
-    if ! fmt_tmp="$(mkstemps "$2" ".$1")"; then
+    if ! fmt_tmp="$(mkstemps "$2" ".$1")" \
+      && ! fmt_tmp_chk="$(mkstemps "$2" ".jpg")"; then
       msg="failed to create temp files"
     else
       magick -size 1x1 xc:black "$fmt_tmp"
-      magick "$fmt_tmp" "${fmt_tmp}.jpg" > /dev/null 2>&1 \
+      magick "$fmt_tmp" "$fmt_tmp_chk" > /dev/null 2>&1 \
         || msg="format '$1' not an image"
     fi
   fi
