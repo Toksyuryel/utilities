@@ -90,11 +90,9 @@ error="$(checkfmt "$format" "$template")" || die "$error"
 
 dims="$(capture "$mode" "$tmpname")" \
   || die "import failed for an unknown reason, most likely on wayland."
-
 time="$(date +%F-%H%M%S)"
 suffix="screencap"
 outname="${outdir}/${time}_${dims}_${suffix}.${format}"
-
 link "$tmpname" "$outname" || die "rename failed"
 chmod "$(printf '%.4o' $((0666 & (~$(umask)))))" "$outname" \
   || err "failed to set file permissions"
@@ -102,6 +100,7 @@ chmod "$(printf '%.4o' $((0666 & (~$(umask)))))" "$outname" \
 if [ ! "$quiet" ]; then
   if ! icon="$(mkstemps "$template" ".jpg")"; then
     err "failed to generate thumbnail"
+    notify-send -a "$app" "Screenshot saved" "$outname"
   else
     magick "$outname" -resize 128x128 "$icon"
     notify-send -a "$app" -i "$icon" "Screenshot saved" "$outname"
