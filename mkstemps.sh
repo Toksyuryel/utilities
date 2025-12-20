@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# 
+#
 # mkstemps [template] suffix
 # a reimplementation of mkstemps(3) for use in POSIX-compatible shell scripts
 # needed because mktemp is not in POSIX and m4 only provides mkstemp
@@ -10,7 +10,7 @@ mkstemps() (
   elif [ $# -eq 2 ]; then
     suffix="$2"
     if [ ! -d "$1" ]; then
-      printf '%s' "$1" | grep "^[^X]*XXXXXX$" > /dev/null 2>&1 || return 1
+      printf '%s' "$1" | grep "^[^X]*XXXXXX$" >/dev/null 2>&1 || return 1
       tmpdir="$(dirname "$1")"
       template="$1"
     else
@@ -27,7 +27,7 @@ mkstemps() (
     target="$(printf '%s%s' "$tempfile" "$suffix")"
     link "$tempfile" "$target"; unlink "$tempfile"
     [ ! -e "$target" ]
-  do : ; done
+  do :; done
   [ -e "$target" ] || return 2
   printf '%s' "$target"
 )

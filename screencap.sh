@@ -7,7 +7,7 @@ appdir="$(dirname "$0")"
 . "${appdir}/mkstemps.sh"
 
 usage() {
-  cat << EOF 1>&2
+  cat <<EOF 1>&2
 usage: $app [-qrs] [-d dir] [-f fmt]
 Creates and saves a screenshot using ImageMagick.
 Left click selects a window, left click and drag selects a region.
@@ -30,28 +30,24 @@ checkfmt() (
     | awk '{ print $3 }' \
     | grep -q 'w'; then
     msg="format '$1' not supported"
+  elif ! { fmt_tmp="$(mkstemps "$2" ".$1")" \
+    && fmt_tmp_chk="$(mkstemps "$2" ".jpg")"; }; then
+    msg="failed to create temp files"
+  elif magick -size 1x1 xc:black "$fmt_tmp" \
+    ; ! magick "$fmt_tmp" "$fmt_tmp_chk" > /dev/null 2>&1; then
+      msg="format '$1' not an image"
   else
-    if ! fmt_tmp="$(mkstemps "$2" ".$1")" \
-      && ! fmt_tmp_chk="$(mkstemps "$2" ".jpg")"; then
-      msg="failed to create temp files"
-    else
-      magick -size 1x1 xc:black "$fmt_tmp"
-      magick "$fmt_tmp" "$fmt_tmp_chk" > /dev/null 2>&1 \
-        || msg="format '$1' not an image"
-    fi
+    return 0
   fi
-  if [ "$msg" ]; then
-    printf '%s' "$msg"
-    return 1
-  fi
-  return 0
+  printf '%s' "$msg"
+  return 1
 )
 
 capture() {
   mode="$1"; shift
   case "$mode" in
-    r)  set -- -window 'root' "$@" ;;
-    s)  set -- -screen "$@" ;;
+    r) set -- -window 'root' "$@" ;;
+    s) set -- -screen "$@" ;;
   esac
   magick import -identify -format '%wx%h' -silent "$@"
 }
@@ -62,18 +58,18 @@ format="png"
 
 unset mode OPTIND
 # shellcheck disable=SC2015
-depend dbus-send notify-send > /dev/null 2>&1 \
+depend dbus-send notify-send >/dev/null 2>&1 \
   && dbus-send --dest=org.freedesktop.Notifications / \
-     org.freedesktop.DBus.Peer.Ping > /dev/null 2>&1 \
+     org.freedesktop.DBus.Peer.Ping >/dev/null 2>&1 \
   || set -- "-q" "$@"
 while getopts d:f:qrs opt; do
   case $opt in
-    d)  outdir="$OPTARG" ;;
-    f)  format="$OPTARG" ;;
-    q)  quiet=1; erropts="-q" ;;
-    r)  mode="r" ;;
-    s)  mode="s" ;;
-    ?)  usage ;;
+    d) outdir="$OPTARG" ;;
+    f) format="$OPTARG" ;;
+    q) quiet=1; erropts="-q" ;;
+    r) mode="r" ;;
+    s) mode="s" ;;
+    ?) usage ;;
   esac
 done
 shift $((OPTIND - 1))
@@ -82,36 +78,34 @@ error="$(depend magick)" || die "$error"
 
 [ ! "$WAYLAND_DISPLAY" ] && [ ! "$XDG_SESSION_TYPE" = "wayland" ] \
   || die "ImageMagick import does not function on wayland."
-xset q > /dev/null 2>&1 || die "Can't find X session."
+xset q >/dev/null 2>&1 || die "Can't find X session."
 
 error="$(checkdir_xdg "$outdir" "$tmpdir")" || die "$error"
-
 trap 'clean "${tmpdir}/"*' EXIT
 
 template="${tmpdir}/${app}XXXXXX"
 tmpname="$(mkstemps "$template" ".$format")" \
   || die "failed to create temp files"
-if [ ! "$quiet" ]; then
-  icon="$(mkstemps "$template" ".jpg")" \
-    || die "failed to create temp files"
-fi
-
 error="$(checkfmt "$format" "$template")" || die "$error"
 
 dims="$(capture "$mode" "$tmpname")" \
   || die "import failed for an unknown reason, most likely on wayland."
-[ ! "$quiet" ] \
-  && magick "$tmpname" -resize 128x128 "$icon"
 
 time="$(date +%F-%H%M%S)"
 suffix="screencap"
-
 outname="${outdir}/${time}_${dims}_${suffix}.${format}"
 
 link "$tmpname" "$outname" || die "rename failed"
 chmod "$(printf '%.4o' $((0666 & (~$(umask)))))" "$outname" \
   || err "failed to set file permissions"
-[ ! "$quiet" ] \
-  && notify-send -a "$app" -i "$icon" "Screenshot saved" "$outname"
+
+if [ ! "$quiet" ]; then
+  if ! icon="$(mkstemps "$template" ".jpg")"; then
+    err "failed to generate thumbnail"
+  else
+    magick "$outname" -resize 128x128 "$icon"
+    notify-send -a "$app" -i "$icon" "Screenshot saved" "$outname"
+  fi
+fi
 
 exit 0

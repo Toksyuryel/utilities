@@ -33,19 +33,17 @@ err() (
   unset quiet silent OPTIND
   while getopts qst: OPT; do
     case $OPT in
-      q)  quiet=1 ;;
-      s)  silent=1 ;;
-      t)  title="$OPTARG" ;;
-      ?)  ;;
+      q) quiet=1 ;;
+      s) silent=1 ;;
+      t) title="$OPTARG" ;;
+      ?) ;;
     esac
   done
   shift $((OPTIND - 1))
 
   [ $# -ge 1 ] || set -- "unknown error"
-  [ "$silent" ] \
-    || _print_err "$@"
-  [ "$quiet" ] \
-    || _notify_err "$title" "$@"
+  [ "$silent" ] || _print_err "$@"
+  [ "$quiet" ] || _notify_err "$title" "$@"
   return 0
 )
 
@@ -61,7 +59,7 @@ die() {
 # reports an error if any name is missing from the user's path
 depend() (
   for command; do
-    if ! type "$command" > /dev/null 2>&1; then
+    if ! type "$command" >/dev/null 2>&1; then
       printf '%s' "Cannot find '$command'; is it in your PATH?"
       return 1
     fi
@@ -79,28 +77,25 @@ depend() (
 checkdir_xdg() (
   unset msg
   for file; do
-    if [ -d "$file" ]; then
-      [ -x "$file" ] && [ -w "$file" ] \
-        || msg="$file exists but is not writable."
-    elif [ -e "$file" ]; then
+    # shellcheck disable=SC2174
+    if [ ! -e "$file" ] && ! mkdir -p -m 0700 "$file"; then
+      msg="$file does not exist and could not be created."
+    elif [ ! -d "$file" ]; then
       msg="$file exists but is not a directory."
+    elif [ ! -x "$file" ] || [ ! -w "$file" ]; then
+      msg="$file exists but is not writable."
     else
-      # shellcheck disable=SC2174
-      mkdir -p -m 0700 "$file" \
-        || msg="$file does not exist and could not be created."
+      continue
     fi
-    if [ "$msg" ]; then
-      printf '%s' "$msg"
-      return 1
-    fi
+    printf '%s' "$msg"
+    return 1
   done
-  return 0
 )
 
 # clean [file ...]
 # Safely deletes each provided file. Use for cleaning up temporary files.
 # Set a trap on EXIT to run this automatically when your script exits
-# 
+#
 # example usage:
 #   trap 'clean "${tmpdir}/*"' EXIT
 clean() (
